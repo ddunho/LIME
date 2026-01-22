@@ -1,0 +1,59 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+  "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.example.demo.mapper.UserMapper">
+
+    <select id="findAll" resultType="com.example.demo.domain.User">
+    	SELECT user_uid AS userUid			/* 유저번호 */
+    	     , username
+    	     , email
+    	     , password
+    	     , phone
+    	     , address
+    	     , address_detail AS addressDetail
+    	     , address_extra  AS addressExtra
+    	     , zipcode
+    	     , signup_date    AS signupDate
+          FROM user_tb
+	</select>
+    
+    <insert id="insertUser" parameterType="User">
+        INSERT INTO user_tb 
+             ( user_uid
+             , username
+             , email
+             , password
+             , phone
+             , address
+             , address_detail
+             
+             , address_extra
+             , zipcode
+             ) 
+        VALUES 
+             ( user_seq.NEXTVAL
+             , #{username}
+             , #{email}
+             , #{password}
+             , #{phone}
+             , #{address}
+             , #{addressDetail}
+             , #{addressExtra, jdbcType=VARCHAR}
+             , #{zipcode}
+        	 )
+    </insert>
+    
+    <select id="existEmail" parameterType="string" resultType="int">
+	    SELECT COUNT(*)
+	    FROM user_tb
+	    WHERE email = #{email}
+	</select>
+	
+	<select id="existUserName" parameterType="string" resultType="int">
+	    SELECT COUNT(*)
+	    FROM user_tb
+	    WHERE userName = #{userName}
+	</select>
+
+</mapper>
