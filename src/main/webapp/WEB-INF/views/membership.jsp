@@ -35,7 +35,8 @@
                                 <input type="text"
                                        class="form-control form-control-user"
                                        name="username"
-                                       placeholder="이름"/>
+                                       maxlength="10"
+                                       placeholder="이름 (최대 10글자)"/>
                                 <small id="usernameMsg"></small>
                             </div>
 
@@ -45,7 +46,9 @@
                                     <input type="email"
                                            class="form-control form-control-user"
                                            name="email"
-                                           placeholder="이메일주소"/>
+                                           maxlength="254"
+                                           placeholder="이메일주소 (최대 254글자)"/>
+                                    <small id="emailMsg"></small>
                                 </div>
                                 <div class="col-sm-3">
                                     <button type="button"
@@ -62,12 +65,14 @@
                                     <input type="password"
                                            class="form-control form-control-user"
                                            name="password"
-                                           placeholder="비밀번호"/>
+                                           maxlength="15"
+                                           placeholder="비밀번호 (8-15자)"/>
                                 </div>
                                 <div class="col-sm-6">
                                     <input type="password"
                                            class="form-control form-control-user"
                                            name="passwordConfirm"
+                                           maxlength="15"
                                            placeholder="비밀번호 확인"/>
                                 </div>
                             </div>
@@ -77,7 +82,8 @@
                                 <input type="text"
                                        class="form-control form-control-user"
                                        name="phone"
-                                       placeholder="휴대폰번호"/>
+                                       maxlength="13"
+                                       placeholder="휴대폰번호 (010-0000-0000)"/>
                             </div>
 
                             <!-- address -->
@@ -86,6 +92,7 @@
                                     <input type="text"
                                            class="form-control form-control-user"
                                            name="address"
+                                           readonly
                                            placeholder="주소"/>
                                 </div>
                                 <div class="col-sm-3">
@@ -109,12 +116,14 @@
                                     <input type="text"
                                            class="form-control form-control-user"
                                            name="zipcode"
+                                           readonly
                                            placeholder="우편번호"/>
                                 </div>
                                 <div class="col-sm-6">
                                     <input type="text"
                                            class="form-control form-control-user"
                                            name="addressExtra"
+                                           readonly
                                            placeholder="참고사항"/>
                                 </div>
                             </div>
@@ -148,21 +157,26 @@
 
 const form = document.querySelector("form.user");
 const usernameMsg = document.getElementById("usernameMsg");
+const emailMsg = document.getElementById("emailMsg");
 const emailInput = form.email;
 
 let isUsernameValid = false;
+let isEmailValid = false;
 
 
 /*--------------------------------------------username--------------------------------------------*/
 
 form.username.addEventListener("input", function () {
+    // 영문, 숫자만 허용하고 10글자 제한
     this.value = this.value.replace(/[^a-zA-Z0-9]/g, "");
+    
+    // 입력 내용 변경 시 중복확인 초기화
     isUsernameValid = false;
     usernameMsg.textContent = "";
 });
 
 form.username.addEventListener("blur", function () {
-    const username = this.value.trim();
+    const username = this.value;
 
     if (!username || username.length > 10) {
         usernameMsg.textContent = "닉네임은 10글자 이하로 입력해주세요.";
@@ -172,7 +186,7 @@ form.username.addEventListener("blur", function () {
     }
 
 	const xhr = new XMLHttpRequest();
-	xhr.open("POST", "/check-userName", true);
+	xhr.open("POST", "user/check-userName", true);
 	xhr.setRequestHeader("Content-Type", "application/json");
 
 	xhr.onreadystatechange = function () {
@@ -192,18 +206,22 @@ form.username.addEventListener("blur", function () {
 	};
 
 	xhr.send(JSON.stringify({ userName: username }));
-
 });
 
 /*--------------------------------------------email--------------------------------------------*/
 
 emailInput.addEventListener("input", function () {
-    this.value = this.value.replace(/[^a-zA-Z0-9@.]/g, "");
+    // 이메일 허용 문자만 입력 가능하고 254글자 제한
+    this.value = this.value.replace(/[^a-zA-Z0-9@._-]/g, "");
+    
+    // 입력 내용 변경 시 중복확인 초기화
+    isEmailValid = false;
+    emailMsg.textContent = "";
 });
 
 function checkEmail() {
-    const email = emailInput.value.trim();
-    const emailRegex = /^[a-zA-Z0-9@.]{8,15}$/;
+    const email = emailInput.value;
+	const emailRegex = /^[a-zA-Z0-9._-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/;
 
     if (!emailRegex.test(email)) {
         alert("이메일 형식이 올바르지 않습니다.");
@@ -216,30 +234,47 @@ function checkEmail() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ email })
     })
-    .then(res => res.json())
-    .then(isDuplicate => {
-        if (isDuplicate) {
-            alert("이미 사용 중인 이메일 입니다.");
-            emailInput.focus();
-        } else {
-            alert("사용 가능한 이메일 입니다.");
-        }
-    });
+	.then(res => res.json())
+	.then(exists => {
+	    if (exists) {
+	        alert("이미 사용 중인 이메일 입니다.");
+            emailMsg.textContent = "이미 사용 중인 이메일입니다.";
+            emailMsg.style.color = "red";
+            isEmailValid = false;
+	        emailInput.focus();
+	    } else {
+	        alert("사용 가능한 이메일 입니다.");
+            emailMsg.textContent = "사용 가능한 이메일입니다.";
+            emailMsg.style.color = "green";
+            isEmailValid = true;
+	    }
+	});
 }
 
 /*--------------------------------------------password--------------------------------------------*/
 
-const pwRegex = /^(?=.*[A-Za-z])(?=.*\d)(?=.*[@$!%*#?&]).{8,15}$/;
+// 비밀번호: 8-15자, 문자+숫자+특수문자 필수
+const pwRegex = /^(?=.*[A-Za-z])(?=.*\d)(?=.*[@$!%*#?&])[A-Za-z\d@$!%*#?&]{8,15}$/;
 
-form.password.addEventListener("blur", function () {
-    alert(
-        pwRegex.test(this.value)
-            ? "사용 가능한 비밀번호입니다."
-            : "사용 불가능한 비밀번호입니다."
-    );
+form.password.addEventListener("input", function () {
+    // 허용된 문자만 입력 가능
+    this.value = this.value.replace(/[^A-Za-z0-9@$!%*#?&]/g, "");
 });
 
-form.passwordConfirm.addEventListener("blur", function () {
+form.password.addEventListener("change", function () {
+    if (!pwRegex.test(this.value)) {
+        alert("비밀번호는 8-15자이며, 영문, 숫자, 특수문자를 모두 포함해야 합니다.");
+    } else {
+        alert("사용 가능한 비밀번호입니다.");
+    }
+});
+
+form.passwordConfirm.addEventListener("input", function () {
+    // 허용된 문자만 입력 가능
+    this.value = this.value.replace(/[^A-Za-z0-9@$!%*#?&]/g, "");
+});
+
+form.passwordConfirm.addEventListener("change", function () {
     alert(
         this.value === form.password.value
             ? "비밀번호가 일치합니다."
@@ -248,13 +283,29 @@ form.passwordConfirm.addEventListener("blur", function () {
 });
 
 /*--------------------------------------------phone--------------------------------------------*/
-const phoneRegex = /^010\d{8}$/;
 
-form.phone.addEventListener("blur", function () {
+form.phone.addEventListener("input", function () {
+    // 숫자만 입력 가능
+    let value = this.value.replace(/[^0-9]/g, "");
+    
+    // 자동 하이픈 추가 (010-0000-0000 형식)
+    if (value.length > 3 && value.length <= 7) {
+        value = value.slice(0, 3) + "-" + value.slice(3);
+    } else if (value.length > 7) {
+        value = value.slice(0, 3) + "-" + value.slice(3, 7) + "-" + value.slice(7, 11);
+    }
+    
+    this.value = value;
+});
+
+form.phone.addEventListener("change", function () {
+    const phoneWithoutHyphen = this.value.replace(/-/g, "");
+    const phoneRegex = /^010\d{8}$/;
+    
     alert(
-        phoneRegex.test(this.value)
+        phoneRegex.test(phoneWithoutHyphen)
             ? "올바른 휴대폰 번호입니다."
-            : "휴대폰 번호 형식이 올바르지 않습니다."
+            : "휴대폰 번호 형식이 올바르지 않습니다. (010으로 시작하는 11자리)"
     );
 });
 
@@ -265,54 +316,87 @@ document.getElementById("btnSignup").addEventListener("click", function (e) {
 });
 
 function signup() {
+    const phoneWithoutHyphen = form.phone.value.replace(/-/g, "");
+    
     const data = {
-        username: form.username.value.trim(),
-        email: emailInput.value.trim(),
-        password: form.password.value,
-        passwordConfirm: form.passwordConfirm.value,
-        phone: form.phone.value.trim(),
-        address: form.address.value.trim(),
-        addressDetail: form.addressDetail.value.trim(),
-        addressExtra: form.addressExtra.value.trim(),
-        zipcode: form.zipcode.value.trim()
+		username: form.username.value,
+		email: emailInput.value,
+		password: form.password.value,
+		passwordConfirm: form.passwordConfirm.value,
+		phone: phoneWithoutHyphen,
+		address: form.address.value,
+		addressDetail: form.addressDetail.value,
+		addressExtra: form.addressExtra.value,
+		zipcode: form.zipcode.value
     };
 
+    // 필수 항목 체크
     if (!data.username || !data.email || !data.password || !data.passwordConfirm || !data.phone) {
         alert("모든 필수 항목을 입력하세요.");
         return;
     }
 
-    if (!isUsernameValid) {
-        alert("닉네임 중복체크를 확인해주세요.");
+    // 닉네임 길이 체크
+    if (data.username.length > 10) {
+        alert("닉네임은 10글자 이하로 입력해주세요.");
         form.username.focus();
         return;
     }
 
-    if (!/^[a-zA-Z0-9@.]{8,15}$/.test(data.email)) {
+    // 닉네임 중복확인 체크
+    if (!isUsernameVadli) {
+        alert("닉네임 중복확인을 완료해주세요.");
+        form.username.focus();
+        return;
+    }
+
+    // 이메일 형식 체크
+    if (!/^[a-zA-Z0-9._-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/.test(data.email)) {
         alert("이메일 형식이 올바르지 않습니다.");
         emailInput.focus();
         return;
     }
 
+    // 이메일 길이 체크
+    if (data.email.length > 254) {
+        alert("이메일은 254글자 이하로 입력해주세요.");
+        emailInput.focus();
+        return;
+    }
+
+    // 이메일 중복확인 체크
+    if (!isEmailValid) {
+        alert("이메일 중복확인을 완료해주세요.");
+        emailInput.focus();
+        return;
+    }
+
+    // 비밀번호 유효성 체크 (영문+숫자+특수문자 필수)
     if (!pwRegex.test(data.password)) {
-        alert("비밀번호 조건을 확인해주세요.");
+        alert("비밀번호는 8-15자이며, 영문, 숫자, 특수문자를 모두 포함해야 합니다.");
         form.password.focus();
         return;
     }
 
+    // 비밀번호 일치 체크
     if (data.password !== data.passwordConfirm) {
         alert("비밀번호가 일치하지 않습니다.");
         form.passwordConfirm.focus();
         return;
     }
 
+    // 휴대폰 번호 유효성 체크
+    const phoneRegex = /^010\d{8}$/;
     if (!phoneRegex.test(data.phone)) {
-        alert("휴대폰 번호 형식이 올바르지 않습니다.");
+        alert("휴대폰 번호 형식이 올바르지 않습니다. (010으로 시작하는 11자리)");
         form.phone.focus();
         return;
     }
 
     if (!confirm("회원가입을 하시겠습니까?")) return;
+	
+	// $.ajax 이거로 변경해주세요
+	// type, data, contenttype, url -> callback success error
 
     const xhr = new XMLHttpRequest();
     xhr.open("POST", "/user/signup", true);

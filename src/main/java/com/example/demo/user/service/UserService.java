@@ -1,9 +1,12 @@
-package com.example.demo.service;
+package com.example.demo.user.service;
 
-import com.example.demo.domain.User;
-import com.example.demo.mapper.UserMapper;
+import com.example.demo.user.domain.User;
+import com.example.demo.user.mapper.UserMapper;
+
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+
+
 import org.springframework.security.crypto.password.PasswordEncoder;
 
 @Service
@@ -17,13 +20,13 @@ public class UserService {
 		this.passwordEncoder = passwordEncoder;
 	}
     
+    
     //회원가입
     @Transactional
-    public void register(User user) {
-    	user.setPassword(
-                passwordEncoder.encode(user.getPassword())
-            );
-        userMapper.insertUser(user);
+    public boolean register(User user) {
+    	// 비밀번호 암호화
+    	user.setPassword(passwordEncoder.encode(user.getPassword()));
+        return userMapper.insertUser(user) > 0 ? true : false;
     }
     
     //이메일 중복 검사
@@ -33,6 +36,6 @@ public class UserService {
     
   //아이디 중복 검사
     public boolean existUserName(String userName) {
-        return userMapper.existEmail(userName) > 0;
+        return userMapper.existUserName(userName) > 0;
     }
 }

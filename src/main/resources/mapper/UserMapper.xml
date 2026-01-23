@@ -2,9 +2,9 @@
 <!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
   "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
 
-<mapper namespace="com.example.demo.mapper.UserMapper">
+<mapper namespace="com.example.demo.user.mapper.UserMapper">
 
-    <select id="findAll" resultType="com.example.demo.domain.User">
+    <select id="findAll" resultType="com.example.demo.user.domain.User">
     	SELECT user_uid AS userUid			/* 유저번호 */
     	     , username
     	     , email
