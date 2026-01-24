@@ -34,11 +34,10 @@ public class UserController {
     @PostMapping("/signup")
     @ResponseBody
     public Map<String, Object> signup(@RequestBody User user) {
-    	// insert에 실패한 경우가 빠져있음(로직이없어요)
     	Map<String, Object> resultMap = new HashMap<>();
     	boolean result = userService.register(user);
     	
-    	if(result = true) {
+    	if(result) {
     		resultMap.put("msg", "회원가입에 성공했습니다.");
     	} else {
     		resultMap.put("msg", "회원가입에 실패했습니다. 관리자에게 문의바랍니다.");
@@ -49,6 +48,7 @@ public class UserController {
     
     //이메일 중복 체크
     @PostMapping("/check-email")
+    @ResponseBody
     public Boolean checkEmail(
             @RequestBody EmailCheckRequest emailCheckRequest) {
 
@@ -60,6 +60,7 @@ public class UserController {
     
   //아이디 중복 체크
     @PostMapping("/check-userName")
+    @ResponseBody
     public Boolean checkUserName(
             @RequestBody UserNameCheckRequest userNameCheckRequest) {
 

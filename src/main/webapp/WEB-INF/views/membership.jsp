@@ -238,14 +238,10 @@ function checkEmail() {
 	.then(exists => {
 	    if (exists) {
 	        alert("이미 사용 중인 이메일 입니다.");
-            emailMsg.textContent = "이미 사용 중인 이메일입니다.";
-            emailMsg.style.color = "red";
             isEmailValid = false;
 	        emailInput.focus();
 	    } else {
 	        alert("사용 가능한 이메일 입니다.");
-            emailMsg.textContent = "사용 가능한 이메일입니다.";
-            emailMsg.style.color = "green";
             isEmailValid = true;
 	    }
 	});

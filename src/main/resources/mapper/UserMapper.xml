@@ -17,9 +17,9 @@
     	     , signup_date    AS signupDate
           FROM user_tb
 	</select>
-    
+
     <insert id="insertUser" parameterType="User">
-        INSERT INTO user_tb 
+        INSERT INTO user_tb
              ( user_uid
              , username
              , email
@@ -27,11 +27,10 @@
              , phone
              , address
              , address_detail
-             
              , address_extra
              , zipcode
-             ) 
-        VALUES 
+             )
+        VALUES
              ( user_seq.NEXTVAL
              , #{username}
              , #{email}
@@ -43,17 +42,17 @@
              , #{zipcode}
         	 )
     </insert>
-    
+
     <select id="existEmail" parameterType="string" resultType="int">
 	    SELECT COUNT(*)
 	    FROM user_tb
 	    WHERE email = #{email}
 	</select>
-	
+
 	<select id="existUserName" parameterType="string" resultType="int">
 	    SELECT COUNT(*)
 	    FROM user_tb
-	    WHERE userName = #{userName}
+	    WHERE username = #{userName}
 	</select>
 
 </mapper>
