@@ -5,6 +5,9 @@ import com.example.demo.user.mapper.UserMapper;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import com.example.demo.user.service.UserService;
+
+
 
 @Service
 public class UserServiceImpl implements UserService {
@@ -33,5 +36,10 @@ public class UserServiceImpl implements UserService {
     @Override
     public boolean existUserName(String userName) {
         return userMapper.existUserName(userName) > 0;
+    }
+    
+    @Override
+    public User findByEmail(String email) {
+        return userMapper.findByEmail(email);
     }
 }

@@ -12,8 +12,14 @@ import org.springframework.web.bind.annotation.RequestBody;
 
 import com.example.demo.user.domain.User;
 import com.example.demo.user.dto.EmailCheckRequest;
+import com.example.demo.user.dto.LoginRequest;
 import com.example.demo.user.dto.UserNameCheckRequest;
 import com.example.demo.user.service.UserService;
+
+import jakarta.servlet.http.HttpSession;
+
+import org.springframework.security.crypto.password.PasswordEncoder;
+
 
 
 
@@ -24,10 +30,13 @@ import com.example.demo.user.service.UserService;
 public class UserController {
 
     private final UserService userService;
+    private final PasswordEncoder passwordEncoder;
 
-    public UserController(UserService userService) {
-        this.userService = userService;
-    }
+    public UserController(UserService userService,
+	            PasswordEncoder passwordEncoder) {
+	this.userService = userService;
+	this.passwordEncoder = passwordEncoder;
+	}
 
     
   //회원가입
@@ -68,4 +77,22 @@ public class UserController {
 
         return exists;
     }
+    
+    //로그인
+    @PostMapping("/login")
+    @ResponseBody
+    public void login(
+            @RequestBody LoginRequest request,
+            HttpSession session) {
+
+        User user = userService.findByEmail(request.getEmail());
+
+        if (user == null ||
+            !passwordEncoder.matches(request.getPassword(), user.getPassword())) {
+            throw new RuntimeException("LOGIN_FAIL");
+        }
+
+        session.setAttribute("LOGIN_USER", user);
+    }
+
 }

@@ -154,274 +154,297 @@
 
 
 <script>
+$(document).ready(function() {
 
-const form = document.querySelector("form.user");
-const usernameMsg = document.getElementById("usernameMsg");
-const emailMsg = document.getElementById("emailMsg");
-const emailInput = form.email;
+    const $form = $('form.user');
+    const $usernameMsg = $('#usernameMsg');
+    const $emailMsg = $('#emailMsg');
+    const $emailInput = $form.find('input[name="email"]');
 
-let isUsernameValid = false;
-let isEmailValid = false;
+    let isUsernameValid = false;
+    let isEmailValid = false;
 
+    /*--------------------------------------------username--------------------------------------------*/
 
-/*--------------------------------------------username--------------------------------------------*/
+    $('input[name="username"]').on('input', function () {
+        //영문, 숫자만 허용하고 10글자 제한
+        $(this).val($(this).val().replace(/[^a-zA-Z0-9]/g, ""));
 
-form.username.addEventListener("input", function () {
-    // 영문, 숫자만 허용하고 10글자 제한
-    this.value = this.value.replace(/[^a-zA-Z0-9]/g, "");
-    
-    // 입력 내용 변경 시 중복확인 초기화
-    isUsernameValid = false;
-    usernameMsg.textContent = "";
-});
-
-form.username.addEventListener("blur", function () {
-    const username = this.value;
-
-    if (!username || username.length > 10) {
-        usernameMsg.textContent = "닉네임은 10글자 이하로 입력해주세요.";
-        usernameMsg.style.color = "red";
+        //입력 내용 변경 시 중복확인 초기화
         isUsernameValid = false;
-        return;
-    }
+        $('#usernameMsg').text('');
+    });
 
-	const xhr = new XMLHttpRequest();
-	xhr.open("POST", "user/check-userName", true);
-	xhr.setRequestHeader("Content-Type", "application/json");
+	$('input[name="username"]').on('blur', function () {
+	    const username = $(this).val();
 
-	xhr.onreadystatechange = function () {
-	    if (xhr.readyState === 4 && xhr.status === 200) {
-	        const isDuplicate = JSON.parse(xhr.responseText);
+	    //빈 값 체크
+	    if (!username) {
+	        $('#usernameMsg')
+	            .text('닉네임을 입력해주세요.')
+	            .css('color', 'red');
+	        isUsernameValid = false;
+	        return;
+	    }
 
-	        if (!isDuplicate) {
-	            usernameMsg.textContent = "사용 가능한 닉네임입니다.";
-	            usernameMsg.style.color = "green";
-	            isUsernameValid = true;
-	        } else {
-	            usernameMsg.textContent = "이미 존재하는 닉네임입니다.";
-	            usernameMsg.style.color = "red";
+	    //길이 체크
+	    if (username.length > 10) {
+	        $('#usernameMsg')
+	            .text('닉네임은 10글자 이하로 입력해주세요.')
+	            .css('color', 'red');
+	        isUsernameValid = false;
+	        return;
+	    }
+	    
+	    //중복 확인
+	    $.ajax({
+	        type: 'POST',
+	        url: '/user/check-userName',
+	        contentType: 'application/json',
+	        data: JSON.stringify({ userName: username }),
+	        success: function (isDuplicate) {
+	            if (!isDuplicate) {
+	                $('#usernameMsg')
+	                    .text('사용 가능한 닉네임입니다.')
+	                    .css('color', 'green');
+	                isUsernameValid = true;
+	            } else {
+	                $('#usernameMsg')
+	                    .text('이미 존재하는 닉네임입니다.')
+	                    .css('color', 'red');
+	                isUsernameValid = false;
+	            }
+	        },
+	        error: function () {
+	            $('#usernameMsg')
+	                .text('중복 확인 중 오류가 발생했습니다.')
+	                .css('color', 'red');
 	            isUsernameValid = false;
 	        }
-	    }
-	};
+	    });
+    });
 
-	xhr.send(JSON.stringify({ userName: username }));
-});
+    /*--------------------------------------------email--------------------------------------------*/
 
-/*--------------------------------------------email--------------------------------------------*/
+    $('input[name="email"]').on('input', function () {
+        // 이메일 허용 문자만 입력 가능하고 254글자 제한
+        $(this).val($(this).val().replace(/[^a-zA-Z0-9@._-]/g, ""));
 
-emailInput.addEventListener("input", function () {
-    // 이메일 허용 문자만 입력 가능하고 254글자 제한
-    this.value = this.value.replace(/[^a-zA-Z0-9@._-]/g, "");
-    
-    // 입력 내용 변경 시 중복확인 초기화
-    isEmailValid = false;
-    emailMsg.textContent = "";
-});
+        // 입력 내용 변경 시 중복확인 초기화
+        isEmailValid = false;
+        $('#emailMsg').text('');
+    });
 
-function checkEmail() {
-    const email = emailInput.value;
-	const emailRegex = /^[a-zA-Z0-9._-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/;
+    window.checkEmail = function() {
+        const email = $emailInput.val();
+        const emailRegex = /^[a-zA-Z0-9._-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/;
 
-    if (!emailRegex.test(email)) {
-        alert("이메일 형식이 올바르지 않습니다.");
-        emailInput.focus();
-        return;
-    }
-
-    fetch("/user/check-email", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ email })
-    })
-	.then(res => res.json())
-	.then(exists => {
-	    if (exists) {
-	        alert("이미 사용 중인 이메일 입니다.");
-            isEmailValid = false;
-	        emailInput.focus();
-	    } else {
-	        alert("사용 가능한 이메일 입니다.");
-            isEmailValid = true;
-	    }
-	});
-}
-
-/*--------------------------------------------password--------------------------------------------*/
-
-// 비밀번호: 8-15자, 문자+숫자+특수문자 필수
-const pwRegex = /^(?=.*[A-Za-z])(?=.*\d)(?=.*[@$!%*#?&])[A-Za-z\d@$!%*#?&]{8,15}$/;
-
-form.password.addEventListener("input", function () {
-    // 허용된 문자만 입력 가능
-    this.value = this.value.replace(/[^A-Za-z0-9@$!%*#?&]/g, "");
-});
-
-form.password.addEventListener("change", function () {
-    if (!pwRegex.test(this.value)) {
-        alert("비밀번호는 8-15자이며, 영문, 숫자, 특수문자를 모두 포함해야 합니다.");
-    } else {
-        alert("사용 가능한 비밀번호입니다.");
-    }
-});
-
-form.passwordConfirm.addEventListener("input", function () {
-    // 허용된 문자만 입력 가능
-    this.value = this.value.replace(/[^A-Za-z0-9@$!%*#?&]/g, "");
-});
-
-form.passwordConfirm.addEventListener("change", function () {
-    alert(
-        this.value === form.password.value
-            ? "비밀번호가 일치합니다."
-            : "비밀번호가 일치하지 않습니다."
-    );
-});
-
-/*--------------------------------------------phone--------------------------------------------*/
-
-form.phone.addEventListener("input", function () {
-    // 숫자만 입력 가능
-    let value = this.value.replace(/[^0-9]/g, "");
-    
-    // 자동 하이픈 추가 (010-0000-0000 형식)
-    if (value.length > 3 && value.length <= 7) {
-        value = value.slice(0, 3) + "-" + value.slice(3);
-    } else if (value.length > 7) {
-        value = value.slice(0, 3) + "-" + value.slice(3, 7) + "-" + value.slice(7, 11);
-    }
-    
-    this.value = value;
-});
-
-form.phone.addEventListener("change", function () {
-    const phoneWithoutHyphen = this.value.replace(/-/g, "");
-    const phoneRegex = /^010\d{8}$/;
-    
-    alert(
-        phoneRegex.test(phoneWithoutHyphen)
-            ? "올바른 휴대폰 번호입니다."
-            : "휴대폰 번호 형식이 올바르지 않습니다. (010으로 시작하는 11자리)"
-    );
-});
-
-/*--------------------------------------------signup--------------------------------------------*/
-document.getElementById("btnSignup").addEventListener("click", function (e) {
-    e.preventDefault();
-    signup();
-});
-
-function signup() {
-    const phoneWithoutHyphen = form.phone.value.replace(/-/g, "");
-    
-    const data = {
-		username: form.username.value,
-		email: emailInput.value,
-		password: form.password.value,
-		passwordConfirm: form.passwordConfirm.value,
-		phone: phoneWithoutHyphen,
-		address: form.address.value,
-		addressDetail: form.addressDetail.value,
-		addressExtra: form.addressExtra.value,
-		zipcode: form.zipcode.value
-    };
-
-    // 필수 항목 체크
-    if (!data.username || !data.email || !data.password || !data.passwordConfirm || !data.phone) {
-        alert("모든 필수 항목을 입력하세요.");
-        return;
-    }
-
-    // 닉네임 길이 체크
-    if (data.username.length > 10) {
-        alert("닉네임은 10글자 이하로 입력해주세요.");
-        form.username.focus();
-        return;
-    }
-
-    // 닉네임 중복확인 체크
-    if (!isUsernameVadli) {
-        alert("닉네임 중복확인을 완료해주세요.");
-        form.username.focus();
-        return;
-    }
-
-    // 이메일 형식 체크
-    if (!/^[a-zA-Z0-9._-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/.test(data.email)) {
-        alert("이메일 형식이 올바르지 않습니다.");
-        emailInput.focus();
-        return;
-    }
-
-    // 이메일 길이 체크
-    if (data.email.length > 254) {
-        alert("이메일은 254글자 이하로 입력해주세요.");
-        emailInput.focus();
-        return;
-    }
-
-    // 이메일 중복확인 체크
-    if (!isEmailValid) {
-        alert("이메일 중복확인을 완료해주세요.");
-        emailInput.focus();
-        return;
-    }
-
-    // 비밀번호 유효성 체크 (영문+숫자+특수문자 필수)
-    if (!pwRegex.test(data.password)) {
-        alert("비밀번호는 8-15자이며, 영문, 숫자, 특수문자를 모두 포함해야 합니다.");
-        form.password.focus();
-        return;
-    }
-
-    // 비밀번호 일치 체크
-    if (data.password !== data.passwordConfirm) {
-        alert("비밀번호가 일치하지 않습니다.");
-        form.passwordConfirm.focus();
-        return;
-    }
-
-    // 휴대폰 번호 유효성 체크
-    const phoneRegex = /^010\d{8}$/;
-    if (!phoneRegex.test(data.phone)) {
-        alert("휴대폰 번호 형식이 올바르지 않습니다. (010으로 시작하는 11자리)");
-        form.phone.focus();
-        return;
-    }
-
-    if (!confirm("회원가입을 하시겠습니까?")) return;
-	
-	// $.ajax 이거로 변경해주세요
-	// type, data, contenttype, url -> callback success error
-
-    const xhr = new XMLHttpRequest();
-    xhr.open("POST", "/user/signup", true);
-    xhr.setRequestHeader("Content-Type", "application/json");
-
-    xhr.onreadystatechange = function () {
-        if (xhr.readyState === 4 && xhr.status === 200) {
-            alert("회원가입이 완료되었습니다.");
-            location.href = "/login";
+        if (!emailRegex.test(email)) {
+            alert("이메일 형식이 올바르지 않습니다.");
+            $emailInput.focus();
+            return;
         }
-    };
-    xhr.send(JSON.stringify(data));
-}
+
+        fetch("/user/check-email", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ email })
+        })
+        .then(res => res.json())
+        .then(exists => {
+            if (exists) {
+                alert("이미 사용 중인 이메일 입니다.");
+                isEmailValid = false;
+                $emailInput.focus();
+            } else {
+                alert("사용 가능한 이메일 입니다.");
+                isEmailValid = true;
+            }
+        });
+    }
+
+    /*--------------------------------------------password--------------------------------------------*/
+
+    // 비밀번호: 8-15자, 문자+숫자+특수문자 필수
+    const pwRegex = /^(?=.*[A-Za-z])(?=.*\d)(?=.*[@$!%*#?&])[A-Za-z\d@$!%*#?&]{8,15}$/;
+
+    $('input[name="password"]').on('input', function () {
+        // 허용된 문자만 입력 가능
+        $(this).val($(this).val().replace(/[^A-Za-z0-9@$!%*#?&]/g, ""));
+    });
+
+    $('input[name="password"]').on('change', function () {
+        if (!pwRegex.test($(this).val())) {
+            alert("비밀번호는 8-15자이며, 영문, 숫자, 특수문자를 모두 포함해야 합니다.");
+        } else {
+            alert("사용 가능한 비밀번호입니다.");
+        }
+    });
+
+    $('input[name="passwordConfirm"]').on('input', function () {
+        // 허용된 문자만 입력 가능
+        $(this).val($(this).val().replace(/[^A-Za-z0-9@$!%*#?&]/g, ""));
+    });
+
+    $('input[name="passwordConfirm"]').on('change', function () {
+        alert(
+            $(this).val() === $('input[name="password"]').val()
+                ? "비밀번호가 일치합니다."
+                : "비밀번호가 일치하지 않습니다."
+        );
+    });
+
+    /*--------------------------------------------phone--------------------------------------------*/
+
+    $('input[name="phone"]').on('input', function () {
+        // 숫자만 입력 가능
+        let value = $(this).val().replace(/[^0-9]/g, "");
+
+        // 자동 하이픈 추가 (010-0000-0000 형식)
+        if (value.length > 3 && value.length <= 7) {
+            value = value.slice(0, 3) + "-" + value.slice(3);
+        } else if (value.length > 7) {
+            value = value.slice(0, 3) + "-" + value.slice(3, 7) + "-" + value.slice(7, 11);
+        }
+
+        $(this).val(value);
+    });
+
+    $('input[name="phone"]').on('change', function () {
+        const phoneWithoutHyphen = $(this).val().replace(/-/g, "");
+        const phoneRegex = /^010\d{8}$/;
+
+        alert(
+            phoneRegex.test(phoneWithoutHyphen)
+                ? "올바른 휴대폰 번호입니다."
+                : "휴대폰 번호 형식이 올바르지 않습니다. (010으로 시작하는 11자리)"
+        );
+    });
+
+    /*--------------------------------------------signup--------------------------------------------*/
+    
+    $('#btnSignup').on('click', function (e) {
+        e.preventDefault();
+        signup();
+    });
+
+    function signup() {
+        const phoneWithoutHyphen = $('input[name="phone"]').val().replace(/-/g, "");
+
+        const data = {
+            username: $('input[name="username"]').val(),
+            email: $('input[name="email"]').val(),
+            password: $('input[name="password"]').val(),
+            passwordConfirm: $('input[name="passwordConfirm"]').val(),
+            phone: phoneWithoutHyphen,
+            address: $('input[name="address"]').val(),
+            addressDetail: $('input[name="addressDetail"]').val(),
+            addressExtra: $('input[name="addressExtra"]').val(),
+            zipcode: $('input[name="zipcode"]').val()
+        };
+
+        // 필수 항목 체크
+        if (!data.username || !data.email || !data.password || !data.passwordConfirm || !data.phone) {
+            alert("모든 필수 항목을 입력하세요.");
+            return;
+        }
+
+        // 닉네임 길이 체크
+        if (data.username.length > 10) {
+            alert("닉네임은 10글자 이하로 입력해주세요.");
+            $('input[name="username"]').focus();
+            return;
+        }
+
+        // 닉네임 중복확인 체크
+        if (!isUsernameValid) {
+            alert("닉네임 중복확인을 완료해주세요.");
+            $('input[name="username"]').focus();
+            return;
+        }
+
+        // 이메일 형식 체크
+        if (!/^[a-zA-Z0-9._-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/.test(data.email)) {
+            alert("이메일 형식이 올바르지 않습니다.");
+            $('input[name="email"]').focus();
+            return;
+        }
+
+        // 이메일 길이 체크
+        if (data.email.length > 254) {
+            alert("이메일은 254글자 이하로 입력해주세요.");
+            $('input[name="email"]').focus();
+            return;
+        }
+
+        // 이메일 중복확인 체크
+        if (!isEmailValid) {
+            alert("이메일 중복확인을 완료해주세요.");
+            $('input[name="email"]').focus();
+            return;
+        }
+
+        // 비밀번호 유효성 체크
+        if (!pwRegex.test(data.password)) {
+            alert("비밀번호는 8-15자이며, 영문, 숫자, 특수문자를 모두 포함해야 합니다.");
+            $('input[name="password"]').focus();
+            return;
+        }
+
+        // 비밀번호 일치 체크
+        if (data.password !== data.passwordConfirm) {
+            alert("비밀번호가 일치하지 않습니다.");
+            $('input[name="passwordConfirm"]').focus();
+            return;
+        }
+
+        // 휴대폰 번호 유효성 체크
+        const phoneRegex = /^010\d{8}$/;
+        if (!phoneRegex.test(data.phone)) {
+            alert("휴대폰 번호 형식이 올바르지 않습니다. (010으로 시작하는 11자리)");
+            $('input[name="phone"]').focus();
+            return;
+        }
+
+        if (!confirm("회원가입을 하시겠습니까?")) return;
+
+        $.ajax({
+            type: 'POST',
+            url: '/user/signup',
+            contentType: 'application/json',
+            data: JSON.stringify(data),
+            success: function () {
+                alert("회원가입이 완료되었습니다.");
+                location.href = "/login";
+            },
+            error: function () {
+                alert("회원가입 중 오류가 발생했습니다.");
+            }
+        });
+    }
+
+}); //document.ready 끝
 </script>
 
 <script src="https://t1.daumcdn.net/mapjsapi/bundle/postcode/prod/postcode.v2.js"></script>
 <script>
-function execDaumPostCode() {
-    new daum.Postcode({
-        oncomplete: function(data) {
-            form.zipcode.value = data.zonecode;
-            form.address.value = data.roadAddress || data.jibunAddress;
-            if (data.buildingName) {
-                form.addressExtra.value = data.buildingName;
-            }
-            form.addressDetail.focus();
-        }
-    }).open();
-}
+	function execDaumPostCode() {
+	    new daum.Postcode({
+	        oncomplete: function (data) {
+	            $('input[name="zipcode"]').val(data.zonecode);
+	            $('input[name="address"]').val(
+	                data.roadAddress || data.jibunAddress
+	            );
+
+	            if (data.buildingName) {
+	                $('input[name="addressExtra"]').val(data.buildingName);
+	            }
+
+	            $('input[name="addressDetail"]').focus();
+	        }
+	    }).open();
+	}
+
 </script>
 
 </body>

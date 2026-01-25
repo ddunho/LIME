@@ -29,7 +29,7 @@
                                     <h1 class="h4 text-gray-900 mb-4">Welcome Back!</h1>
                                 </div>
 
-                                <form class="user" method="post" action="/login">
+                                <form class="user" method="post" action="/login" id="loginForm">
                                     <div class="form-group">
                                         <input
                                             type="email"
@@ -58,16 +58,18 @@
                                         </div>
                                     </div>
 
-                                    <button type="submit"
-                                            class="btn btn-primary btn-user btn-block">
-                                        로그인
-                                    </button>
+									<a href="index.html"
+									   id="loginBtn"
+									   class="btn btn-primary btn-user btn-block">
+									  로그인
+									</a>
+
                                 </form>
 
                                 <hr />
 
                                 <div class="text-center">
-                                    <a class="small" href="/register">
+                                    <a class="small" href="/membership">
                                         Create an Account!
                                     </a>
                                 </div>
@@ -80,5 +82,52 @@
         </div>
     </div>
 </div>
+
+
+<script>
+	$(document).ready(function () {
+
+	    const savedEmail = localStorage.getItem("REMEMBER_EMAIL");
+	    if (savedEmail) {
+	        $("input[name='email']").val(savedEmail);
+	        $("#rememberMe").prop("checked", true);
+	    }
+
+	    $("#loginBtn").on("click", function (e) {
+	        e.preventDefault();
+
+	        const email = $("input[name='email']").val().trim();
+	        const password = $("input[name='password']").val().trim();
+	        const rememberMe = $("#rememberMe").is(":checked");
+
+	        if (!email || !password) {
+	            alert("이메일과 비밀번호를 입력해주세요.");
+	            return;
+	        }
+
+	        if (rememberMe) {
+	            localStorage.setItem("REMEMBER_EMAIL", email);
+	        } else {
+	            localStorage.removeItem("REMEMBER_EMAIL");
+	        }
+
+	        $.ajax({
+	            url: "/user/login",
+	            type: "POST",
+	            contentType: "application/json",
+	            data: JSON.stringify({ email, password }),
+	            success: function () {
+					alert("로그인 성공!");
+	                location.href = "/";
+	            },
+	            error: function () {
+	                alert("이메일 또는 비밀번호가 올바르지 않습니다.");
+	            }
+	        });
+	    });
+	});
+
+</script>
+
 </body>
 </html>

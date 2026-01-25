@@ -17,7 +17,7 @@ public class PageController {
         return "membership";
     }
 
-    @GetMapping("/tables")
+    @GetMapping("/")
     public String tables() {
         return "tables";
     }
