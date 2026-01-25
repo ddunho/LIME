@@ -96,8 +96,8 @@
 	    $("#loginBtn").on("click", function (e) {
 	        e.preventDefault();
 
-	        const email = $("input[name='email']").val().trim();
-	        const password = $("input[name='password']").val().trim();
+	        const email = $("input[name='email']").val();
+	        const password = $("input[name='password']").val();
 	        const rememberMe = $("#rememberMe").is(":checked");
 
 	        if (!email || !password) {

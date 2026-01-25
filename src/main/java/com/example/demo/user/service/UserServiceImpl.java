@@ -6,6 +6,11 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import com.example.demo.user.service.UserService;
+import org.springframework.web.server.ResponseStatusException;
+import org.springframework.http.HttpStatus;
+import jakarta.servlet.http.HttpSession;
+
+
 
 
 
@@ -20,7 +25,8 @@ public class UserServiceImpl implements UserService {
         this.userMapper = userMapper;
         this.passwordEncoder = passwordEncoder;
     }
-
+    
+    //회원가입
     @Override
     @Transactional
     public boolean register(User user) {
@@ -28,18 +34,45 @@ public class UserServiceImpl implements UserService {
         return userMapper.insertUser(user) > 0;
     }
 
+    //email로 중복여부
     @Override
     public boolean existEmail(String email) {
         return userMapper.existEmail(email) > 0;
     }
-
+    
+    //userName으로 중복여부
     @Override
     public boolean existUserName(String userName) {
         return userMapper.existUserName(userName) > 0;
     }
     
+    //이메일로 유저정보 찾기
     @Override
     public User findByEmail(String email) {
         return userMapper.findByEmail(email);
+    }
+    
+    
+    //로그인
+    @Override
+    public User login(String email, String password) {
+
+        User user = userMapper.findByEmail(email);
+
+        if (user == null ||
+            !passwordEncoder.matches(password, user.getPassword())) {
+            throw new ResponseStatusException(
+                HttpStatus.UNAUTHORIZED,
+                "이메일 또는 비밀번호가 올바르지 않습니다."
+            );
+        }
+
+        return user;
+    }
+    
+    //로그아웃
+    @Override
+    public void logout(HttpSession session) {
+        session.invalidate();
     }
 }

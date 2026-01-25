@@ -4,6 +4,7 @@ import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.ResponseBody;
+import org.springframework.web.bind.annotation.GetMapping;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -67,7 +68,7 @@ public class UserController {
     }
     
     
-  //아이디 중복 체크
+    //아이디 중복 체크
     @PostMapping("/check-userName")
     @ResponseBody
     public Boolean checkUserName(
@@ -85,14 +86,19 @@ public class UserController {
             @RequestBody LoginRequest request,
             HttpSession session) {
 
-        User user = userService.findByEmail(request.getEmail());
+        User loginUser = userService.login(
+            request.getEmail(),
+            request.getPassword()
+        );
 
-        if (user == null ||
-            !passwordEncoder.matches(request.getPassword(), user.getPassword())) {
-            throw new RuntimeException("LOGIN_FAIL");
-        }
-
-        session.setAttribute("LOGIN_USER", user);
+        session.setAttribute("LOGIN_USER", loginUser);
     }
+    
+    //로그아웃
+    @GetMapping("/logout")
+    public void logout(HttpSession session) {
+        userService.logout(session);
+    }
+
 
 }

@@ -187,10 +187,26 @@
   </div>
 </div>
 
-<!-- ⭐ 이 페이지 전용 JS (DataTables) -->
 <script src="/vendor/datatables/jquery.dataTables.min.js"></script>
 <script src="/vendor/datatables/dataTables.bootstrap4.min.js"></script>
 <script src="/js/demo/datatables-demo.js"></script>
+<script>
+$(document).ready(function () {
+
+    $("#logoutBtn").on("click", function (e) {
+        e.preventDefault();
+
+        $.ajax({
+            url: "/logout",
+            type: "GET",
+            success: function () {
+                location.href = "/";
+            }
+        });
+    });
+
+});
+</script>
 
 </body>
 </html>
