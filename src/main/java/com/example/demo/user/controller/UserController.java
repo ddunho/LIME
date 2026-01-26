@@ -82,7 +82,7 @@ public class UserController {
     //로그인
     @PostMapping("/login")
     @ResponseBody
-    public void login(
+    public boolean login(
             @RequestBody LoginRequest request,
             HttpSession session) {
 
@@ -91,11 +91,17 @@ public class UserController {
             request.getPassword()
         );
 
-        session.setAttribute("LOGIN_USER", loginUser);
+        if (loginUser != null) {
+            session.setAttribute("LOGIN_USER", loginUser);
+            return true;
+        }
+        
+        return false;
     }
     
     //로그아웃
     @GetMapping("/logout")
+    @ResponseBody
     public void logout(HttpSession session) {
         userService.logout(session);
     }

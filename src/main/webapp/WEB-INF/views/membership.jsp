@@ -108,6 +108,7 @@
                                 <input type="text"
                                        class="form-control form-control-user"
                                        name="addressDetail"
+									   maxlength="254"
                                        placeholder="상세주소"/>
                             </div>
 

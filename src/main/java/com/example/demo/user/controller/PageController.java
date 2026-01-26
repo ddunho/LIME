@@ -17,10 +17,10 @@ public class PageController {
         return "membership";
     }
 
-    @GetMapping("/")
-    public String tables() {
-        return "tables";
-    }
+//    @GetMapping("/")
+//    public String tables() {
+//        return "tables";
+//    }
 
     @GetMapping("/write")
     public String write() {

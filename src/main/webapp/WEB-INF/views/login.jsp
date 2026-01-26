@@ -92,10 +92,17 @@
 	        $("input[name='email']").val(savedEmail);
 	        $("#rememberMe").prop("checked", true);
 	    }
+		
+		//Enter 키 눌렀을 시 로그인
+		$("input[name='email'], input[name='password']").on("keydown", function (e) {
+		        if (e.key === "Enter") {
+		            e.preventDefault();
+		            $("#loginBtn").click();
+		        }
+		    });
 
 	    $("#loginBtn").on("click", function (e) {
 	        e.preventDefault();
-
 	        const email = $("input[name='email']").val();
 	        const password = $("input[name='password']").val();
 	        const rememberMe = $("#rememberMe").is(":checked");
@@ -111,19 +118,21 @@
 	            localStorage.removeItem("REMEMBER_EMAIL");
 	        }
 
-	        $.ajax({
-	            url: "/user/login",
-	            type: "POST",
-	            contentType: "application/json",
-	            data: JSON.stringify({ email, password }),
-	            success: function () {
-					alert("로그인 성공!");
-	                location.href = "/";
-	            },
-	            error: function () {
-	                alert("이메일 또는 비밀번호가 올바르지 않습니다.");
-	            }
-	        });
+			$.ajax({
+			    url: "/user/login",
+			    type: "POST",
+			    contentType: "application/json",
+			    data: JSON.stringify({ email, password }),
+			    success: function (result) {
+			        if (result === true) {
+			            alert("로그인 성공!");
+			            location.href = "/";
+			        } else {
+			            alert("이메일 또는 비밀번호가 올바르지 않습니다.");
+			        }
+			    }
+			});
+
 	    });
 	});
 

@@ -20,6 +20,7 @@ public class SecurityConfig {
             .authorizeHttpRequests(auth -> auth
                 .anyRequest().permitAll()
             )
+            .logout(logout -> logout.disable())
         	.formLogin(form -> form.disable());
 
         return http.build();

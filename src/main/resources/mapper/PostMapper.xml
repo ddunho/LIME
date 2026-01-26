@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+  PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+  "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.example.demo.post.mapper.PostMapper">
+
+	<select id="findAll" resultType="map">
+    SELECT
+          P.POST_UID AS postUid        /* 게시글 번호 */
+        , P.TITLE AS title          /* 제목 */
+        , P.WRITE_DATE AS writeDate      /* 작성일 */
+        , U.USERNAME AS username       /* 작성자 닉네임 */
+    FROM POST_TB P
+    JOIN USER_TB U
+      ON P.USER_UID = U.USER_UID
+    WHERE P.DELETEYN = 'N'
+    ORDER BY P.POST_UID DESC
+</select>
+
+</mapper>

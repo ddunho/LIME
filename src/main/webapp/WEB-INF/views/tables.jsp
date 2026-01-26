@@ -1,4 +1,5 @@
 <%@ page language="java" contentType="text/html; charset=UTF-8" pageEncoding="UTF-8"%>
+<%@ include file="/WEB-INF/views/common/taglibs.jsp" %>
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -37,7 +38,18 @@
       <div id="collapsePages" class="collapse" aria-labelledby="headingPages" data-parent="#accordionSidebar">
         <div class="bg-white py-2 collapse-inner rounded">
           <h6 class="collapse-header">Login Screens:</h6>
-          <a class="collapse-item" href="/login">Login</a>
+		  <c:choose>
+		    <c:when test="${not empty LOGIN_USER}">
+				<a class="collapse-item" href="#"
+				   data-toggle="modal" data-target="#logoutModal">
+				  Logout
+				</a>
+		    </c:when>
+			<c:otherwise>
+			  <a class="collapse-item" href="/login">Login</a>
+			</c:otherwise>
+		  </c:choose>
+
           <a class="collapse-item" href="/membership">membership</a>
         </div>
       </div>
@@ -45,7 +57,7 @@
 
     <!-- 현재 페이지 active -->
     <li class="nav-item active">
-      <a class="nav-link" href="/tables">
+      <a class="nav-link" href="/post/tables">
         <i class="fas fa-fw fa-table"></i>
         <span>Tables</span>
       </a>
@@ -75,25 +87,55 @@
         <ul class="navbar-nav ml-auto">
           <div class="topbar-divider d-none d-sm-block"></div>
 
-          <li class="nav-item dropdown no-arrow">
-            <a class="nav-link dropdown-toggle" href="#" id="userDropdown" role="button"
-               data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
-              <span class="mr-2 d-none d-lg-inline text-gray-600 small">닉네임</span>
-              <img class="img-profile rounded-circle" src="/img/undraw_profile.svg" />
-            </a>
+		  <li class="nav-item dropdown no-arrow">
 
-            <div class="dropdown-menu dropdown-menu-right shadow animated--grow-in" aria-labelledby="userDropdown">
-              <a class="dropdown-item" href="#">
-                <i class="fas fa-user fa-sm fa-fw mr-2 text-gray-400"></i>
-                Profile
-              </a>
-              <div class="dropdown-divider"></div>
-              <a class="dropdown-item" href="#" data-toggle="modal" data-target="#logoutModal">
-                <i class="fas fa-sign-out-alt fa-sm fa-fw mr-2 text-gray-400"></i>
-                Logout
-              </a>
-            </div>
-          </li>
+		    <c:choose>
+		      <c:when test="${not empty LOGIN_USER}">
+		        <a class="nav-link dropdown-toggle" href="#" id="userDropdown" role="button"
+		           data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+		          <span class="mr-2 d-none d-lg-inline text-gray-600 small">
+		            ${LOGIN_USER.username}
+		          </span>
+		          <img class="img-profile rounded-circle" src="/img/undraw_profile.svg" />
+		        </a>
+		      </c:when>
+
+		      <c:otherwise>
+		        <a class="nav-link" href="#">
+		          <span class="mr-2 d-none d-lg-inline text-gray-600 small">
+		            guest
+		          </span>
+		          <img class="img-profile rounded-circle" src="/img/undraw_profile.svg" />
+		        </a>
+		      </c:otherwise>
+		    </c:choose>
+
+		    <div class="dropdown-menu dropdown-menu-right shadow animated--grow-in"
+		         aria-labelledby="userDropdown">
+		      <a class="dropdown-item" href="#">
+		        <i class="fas fa-user fa-sm fa-fw mr-2 text-gray-400"></i>
+		        Profile
+		      </a>
+		      <div class="dropdown-divider"></div>
+
+		      <c:choose>
+		        <c:when test="${not empty LOGIN_USER}">
+		          <a class="dropdown-item" href="#"
+		             data-toggle="modal" data-target="#logoutModal">
+		            <i class="fas fa-sign-out-alt fa-sm fa-fw mr-2 text-gray-400"></i>
+		            Logout
+		          </a>
+		        </c:when>
+		        <c:otherwise>
+		          <a class="dropdown-item" href="/login">
+		            <i class="fas fa-sign-in-alt fa-sm fa-fw mr-2 text-gray-400"></i>
+		            Login
+		          </a>
+		        </c:otherwise>
+		      </c:choose>
+		    </div>
+
+		  </li>
         </ul>
       </nav>
       <!-- End of Topbar -->
@@ -122,14 +164,18 @@
                   <th>댓글</th>
                 </tr>
                 </thead>
-                <tbody>
-                <tr>
-                  <td>홍길동</td>
-                  <td><a href="/detail">System Architect</a></td>
-                  <td>2011-04-25</td>
-                  <td>0개</td>
-                </tr>
-                </tbody>
+				<tbody>
+				  <c:forEach var="post" items="${postList}">
+				    <tr>
+						<td>${post.USERNAME}</td>
+						<td>${post.TITLE}</td>
+						<td>${post.WRITEDATE}</td>
+
+				      <td>0개</td>
+				    </tr>
+				  </c:forEach>
+				</tbody>
+
               </table>
 
               <a href="/write">
@@ -181,7 +227,7 @@
       </div>
       <div class="modal-footer">
         <button class="btn btn-secondary" type="button" data-dismiss="modal">Cancel</button>
-        <a class="btn btn-primary" href="/login">Logout</a>
+        <a class="btn btn-primary" href="/" id="confirmLogoutBtn">Logout</a>
       </div>
     </div>
   </div>
@@ -189,24 +235,38 @@
 
 <script src="/vendor/datatables/jquery.dataTables.min.js"></script>
 <script src="/vendor/datatables/dataTables.bootstrap4.min.js"></script>
-<script src="/js/demo/datatables-demo.js"></script>
-<script>
-$(document).ready(function () {
+<script src="/js/demo/datatables-demo.js"></script><script>
+  $(function () {
 
-    $("#logoutBtn").on("click", function (e) {
-        e.preventDefault();
+    $("#confirmLogoutBtn").on("click", function (e) {
+      e.preventDefault();
 
-        $.ajax({
-            url: "/logout",
-            type: "GET",
-            success: function () {
-                location.href = "/";
-            }
-        });
+      $.ajax({
+        url: "/user/logout",
+        type: "GET",
+        success: function () {
+          alert("로그아웃 성공");
+          location.href = "/";
+        }
+      });
     });
 
+  });
+</script>
+
+<script>
+$(document).ready(function () {
+  $('#dataTable').DataTable({
+    retrieve: true,
+    paging: true,
+    searching: true,
+    ordering: true,
+    info: true
+  });
 });
 </script>
+
+
 
 </body>
 </html>

@@ -52,21 +52,20 @@ public class UserServiceImpl implements UserService {
         return userMapper.findByEmail(email);
     }
     
-    
     //로그인
     @Override
     public User login(String email, String password) {
-
         User user = userMapper.findByEmail(email);
-
-        if (user == null ||
-            !passwordEncoder.matches(password, user.getPassword())) {
-            throw new ResponseStatusException(
-                HttpStatus.UNAUTHORIZED,
-                "이메일 또는 비밀번호가 올바르지 않습니다."
-            );
+        
+        if (user == null) {
+            return null;
         }
-
+        
+        if (!passwordEncoder.matches(password, user.getPassword())) {
+            return null;
+        }
+        
+        user.setPassword(null);
         return user;
     }
     
