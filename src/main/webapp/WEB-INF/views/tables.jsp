@@ -57,7 +57,7 @@
 
     <!-- 현재 페이지 active -->
     <li class="nav-item active">
-      <a class="nav-link" href="/post/tables">
+      <a class="nav-link" href="/">
         <i class="fas fa-fw fa-table"></i>
         <span>Tables</span>
       </a>
@@ -101,7 +101,7 @@
 		      </c:when>
 
 		      <c:otherwise>
-		        <a class="nav-link" href="#">
+		        <a class="nav-link" href="/login">
 		          <span class="mr-2 d-none d-lg-inline text-gray-600 small">
 		            guest
 		          </span>
@@ -165,18 +165,42 @@
                 </tr>
                 </thead>
 				<tbody>
-				  <c:forEach var="post" items="${postList}">
+				  <c:forEach var="post" items="${posts}">
 				    <tr>
 						<td>${post.USERNAME}</td>
 						<td>${post.TITLE}</td>
 						<td>${post.WRITEDATE}</td>
-
 				      <td>0개</td>
 				    </tr>
 				  </c:forEach>
 				</tbody>
 
               </table>
+			  
+			  
+			  <nav aria-label="Page navigation">
+			    <ul class="pagination justify-content-center">
+
+			      <!-- 이전 -->
+			      <li class="page-item ${currentPage == 1 ? 'disabled' : ''}">
+			        <a class="page-link" href="/?page=${currentPage - 1}">Previous</a>
+			      </li>
+
+			      <!-- 페이지 번호 -->
+			      <c:forEach var="i" begin="1" end="${totalPages}">
+			        <li class="page-item ${i == currentPage ? 'active' : ''}">
+			          <a class="page-link" href="/?page=${i}">${i}</a>
+			        </li>
+			      </c:forEach>
+
+			      <!-- 다음 -->
+			      <li class="page-item ${currentPage == totalPages ? 'disabled' : ''}">
+			        <a class="page-link" href="/?page=${currentPage + 1}">Next</a>
+			      </li>
+
+			    </ul>
+			  </nav>
+
 
               <a href="/write">
                 <button type="button" class="btn btn-primary btn float-right">
@@ -235,7 +259,8 @@
 
 <script src="/vendor/datatables/jquery.dataTables.min.js"></script>
 <script src="/vendor/datatables/dataTables.bootstrap4.min.js"></script>
-<script src="/js/demo/datatables-demo.js"></script><script>
+
+<script>
   $(function () {
 
     $("#confirmLogoutBtn").on("click", function (e) {
@@ -257,14 +282,14 @@
 <script>
 $(document).ready(function () {
   $('#dataTable').DataTable({
-    retrieve: true,
-    paging: true,
-    searching: true,
-    ordering: true,
-    info: true
+    paging: false,
+    searching: false,
+    ordering: false,
+    info: false
   });
 });
 </script>
+
 
 
 

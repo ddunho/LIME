@@ -16,6 +16,79 @@
       ON P.USER_UID = U.USER_UID
     WHERE P.DELETEYN = 'N'
     ORDER BY P.POST_UID DESC
+	</select>
+
+	<select id="findPage" resultType="map">
+    SELECT
+          postUid
+        , title
+        , writeDate
+        , username
+    FROM (
+        SELECT
+              P.POST_UID   AS postUid        /* 게시글 번호 */
+            , P.TITLE      AS title          /* 제목 */
+            , P.WRITE_DATE AS writeDate      /* 작성일 */
+            , U.USERNAME   AS username       /* 작성자 닉네임 */
+            , ROW_NUMBER() OVER (
+                ORDER BY P.POST_UID DESC
+              ) AS rn                        /* 페이징용 순번 */
+        FROM POST_TB P
+        JOIN USER_TB U
+          ON P.USER_UID = U.USER_UID
+        WHERE P.DELETEYN = 'N'
+    )
+    WHERE rn BETWEEN #{start} AND #{end}
 </select>
+
+	
+	<select id="countAll" resultType="int">
+	    SELECT COUNT(*)
+	    FROM POST_TB
+	</select>
+	
+	<!-- 게시글 저장 -->
+    <insert id="insertPost" parameterType="map">
+        <selectKey keyProperty="postUid" resultType="long" order="BEFORE">
+            SELECT post_seq.NEXTVAL FROM dual
+        </selectKey>
+
+        INSERT INTO post_tb (
+            post_uid,
+            title,
+            content,
+            write_date,
+            user_uid 
+        ) VALUES (
+            #{postUid},
+            #{title},
+            #{content},
+            SYSDATE,
+            #{userUid}
+        )
+    </insert>
+
+    <!-- 파일 저장 -->
+    <insert id="insertPostFile" parameterType="map">
+        INSERT INTO post_file_tb (
+            file_uid,
+            original_name,
+            stored_name,
+            file_path,
+            file_type,
+            upload_date,
+            post_uid
+        ) VALUES (
+            post_file_seq.NEXTVAL,
+            #{originalName},
+            #{storedName},
+            #{filePath},
+            #{fileType},
+            SYSDATE,
+            #{postUid}
+        )
+    </insert>
+
+
 
 </mapper>
