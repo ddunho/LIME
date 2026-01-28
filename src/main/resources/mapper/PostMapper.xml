@@ -49,24 +49,25 @@
 	
 	<!-- 게시글 저장 -->
     <insert id="insertPost" parameterType="map">
-        <selectKey keyProperty="postUid" resultType="long" order="BEFORE">
-            SELECT post_seq.NEXTVAL FROM dual
-        </selectKey>
-
-        INSERT INTO post_tb (
-            post_uid,
-            title,
-            content,
-            write_date,
-            user_uid 
-        ) VALUES (
-            #{postUid},
-            #{title},
-            #{content},
-            SYSDATE,
-            #{userUid}
-        )
-    </insert>
+	    INSERT INTO post_tb (
+	        post_uid,
+	        title,
+	        content,
+	        write_date,
+	        user_uid,
+	        deleteyn
+	    ) VALUES (
+	        post_seq.NEXTVAL,
+	        #{title},
+	        #{content},
+	        SYSDATE,
+	        #{userUid},
+	        'N'
+	    )
+	    <selectKey keyProperty="postUid" resultType="long" order="AFTER">
+	        SELECT post_seq.CURRVAL FROM DUAL
+	    </selectKey>
+	</insert>
 
     <!-- 파일 저장 -->
     <insert id="insertPostFile" parameterType="map">
