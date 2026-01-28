@@ -3,11 +3,15 @@ package com.example.demo.post.controller;
 import com.example.demo.post.service.PostService;
 import com.example.demo.user.domain.User;
 
+import jakarta.servlet.http.HttpServletResponse;
 import jakarta.servlet.http.HttpSession;
 
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.ResponseBody;
 
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.OutputStream;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
@@ -51,9 +55,7 @@ public class PostController {
             @RequestParam(value = "uploadFile", required = false) MultipartFile[] uploadFiles,
             HttpSession session
     ) {
-        
-        System.out.println("========== Controller 시작 ==========");
-        
+
         Map<String, Object> result = new HashMap<>();
 
         try {
@@ -69,33 +71,88 @@ public class PostController {
 
             List<MultipartFile> fileList = null;
             if (uploadFiles != null && uploadFiles.length > 0) {
-                fileList = new ArrayList<>(Arrays.asList(uploadFiles));
+                fileList = Arrays.asList(uploadFiles);
             }
-            
-            System.out.println("=== 파일 업로드 디버깅 ===");
-            System.out.println("uploadFiles is null? " + (uploadFiles == null));
-            if (uploadFiles != null) {
-                System.out.println("uploadFiles length: " + uploadFiles.length);
-            }
-            
-            System.out.println(">>> Service 호출 직전");
-            postService.write(title, content, fileList, userUid);
-            System.out.println(">>> Service 호출 완료");
+
+            Long postUid = postService.write(title, content, fileList, userUid);
 
             result.put("success", true);
             result.put("message", "게시글이 작성되었습니다.");
-            
+            result.put("postUid", postUid);
+
         } catch (Exception e) {
-            System.out.println("========== 에러 발생 ==========");
-            System.out.println("에러 메시지: " + e.getMessage());
             e.printStackTrace();
-            
             result.put("success", false);
             result.put("message", "에러: " + e.getMessage());
         }
-        
-        System.out.println("========== Controller 끝 ==========");
+
         return result;
     }
+    
+    @GetMapping("/detail")
+    public String detail(
+            @RequestParam Long postUid,
+            Model model
+    ) {
+
+        Map<String, Object> post = postService.findById(postUid);
+        List<Map<String, Object>> files = postService.findFilesByPostUid(postUid);
+
+        model.addAttribute("post", post);
+        model.addAttribute("files", files);
+
+        return "detail";
+    }
+    
+    
+    @GetMapping("/download")
+    public void downloadFile(
+            @RequestParam Long fileUid,
+            HttpServletResponse response
+    ) throws Exception {
+        
+        Map<String, Object> fileInfo = postService.findFileByUid(fileUid);
+
+        if (fileInfo == null) {
+            response.sendError(HttpServletResponse.SC_NOT_FOUND);
+            return;
+        }
+        System.out.println("=== fileInfo keys ===");
+        fileInfo.keySet().forEach(key -> {
+            System.out.println(key + " = " + fileInfo.get(key));
+        });
+        
+        String filePath = (String) fileInfo.get("FILEPATH");
+        String storedName = (String) fileInfo.get("STOREDNAME");
+        String originalName = (String) fileInfo.get("ORIGINALNAME");
+
+        File file = new File(filePath, storedName);
+
+        if (!file.exists()) {
+            response.sendError(HttpServletResponse.SC_NOT_FOUND);
+            return;
+        }
+
+        response.setContentType("application/octet-stream");
+        response.setHeader("Content-Disposition", "attachment; filename=\"" + originalName + "\"");
+        response.setContentLengthLong(file.length());
+
+        // 파일 전송
+        try (FileInputStream fis = new FileInputStream(file);
+             OutputStream os = response.getOutputStream()) {
+            
+            byte[] buffer = new byte[8192];
+            int bytesRead;
+            
+            while ((bytesRead = fis.read(buffer)) != -1) {
+                os.write(buffer, 0, bytesRead);
+            }
+            
+            os.flush();
+        }
+    }
+    
+
+
 
 }

@@ -19,6 +19,12 @@ public interface PostMapper {
 	 void insertPost(Map<String, Object> param);
 
      void insertPostFile(Map<String, Object> param);
+     
+     Map<String, Object> findById(Long postUid);
+
+     List<Map<String, Object>> findFilesByPostUid(Long postUid);
+     
+     Map<String, Object> findFileByUid(Long fileUid);
 
 
 }

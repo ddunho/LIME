@@ -9,6 +9,10 @@ public interface PostService {
 
 	List<Map<String, Object>> findPage(int page);
 	int getTotalPages();
-	void write(String title, String content, List<MultipartFile> uploadFiles, Long userUid) throws Exception;
+	Long write(String title, String content, List<MultipartFile> uploadFiles, Long userUid) throws Exception;
+	Map<String, Object> findById(Long postUid);
+	List<Map<String, Object>> findFilesByPostUid(Long postUid);
+	Map<String, Object> findFileByUid(Long fileUid);
+
 
 }

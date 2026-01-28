@@ -27,10 +27,10 @@ public class PageController {
         return "write";
     }
 
-    @GetMapping("/detail")
-    public String detail() {
-        return "detail";
-    }
+//    @GetMapping("/detail")
+//    public String detail() {
+//        return "detail";
+//    }
 
     @GetMapping("/modify")
     public String modify() {

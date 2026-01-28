@@ -89,6 +89,39 @@
             #{postUid}
         )
     </insert>
+    
+    <select id="findById" resultType="map">
+	    SELECT
+	        p.post_uid   AS postUid,
+	        p.title,
+	        p.content,
+	        p.write_date AS writeDate,
+	        u.username
+	    FROM post_tb p
+	    JOIN user_tb u ON p.user_uid = u.user_uid
+	    WHERE p.post_uid = #{postUid}
+	</select>
+
+	<select id="findFilesByPostUid" resultType="map">
+	    SELECT
+	        file_uid AS "fileUid",
+	        original_name AS "originalName",
+	        stored_name AS "storedName",
+	        file_path AS "filePath"
+	    FROM post_file_tb
+	    WHERE post_uid = #{postUid}
+	</select>
+	
+	<select id="findFileByUid" resultType="map">
+        SELECT
+            file_uid AS fileUid,
+            original_name AS originalName,
+            stored_name AS storedName,
+            file_path AS filePath,
+            file_type AS fileType
+        FROM post_file_tb
+        WHERE file_uid = #{fileUid}
+    </select>
 
 
 

@@ -166,7 +166,7 @@
                 </thead>
 				<tbody>
 				  <c:forEach var="post" items="${posts}">
-				    <tr>
+					<tr style="cursor: pointer;" onclick="location.href='/detail?postUid=${post.POSTUID}'">
 						<td>${post.USERNAME}</td>
 						<td>${post.TITLE}</td>
 						<td>${post.WRITEDATE}</td>
