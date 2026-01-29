@@ -151,8 +151,7 @@
             <div class="card-body">
 
               <!-- Basic Card Example -->
-			  <form id="writeForm" method="post"
-			        enctype="multipart/form-data">
+			  <form id="writeForm" enctype="multipart/form-data">
 
 			    <div class="card shadow mb-4">
 
@@ -170,9 +169,9 @@
 			            />
 			          </div>
 			          <div class="col-md-2 text-right">
-			            <button type="submit" class="btn btn-primary">
-			              작성완료
-			            </button>
+						<button type="button" id="writeBtn" class="btn btn-primary">
+						    작성완료
+						  </button>
 			          </div>
 			        </div>
 			      </div>
@@ -199,6 +198,9 @@
 					      class="form-control-file"
 						  multiple
 					    />
+						<small class="form-text text-muted">
+						    <i class="fas fa-info-circle"></i> 파일은 최대 5개까지 첨부 가능합니다.
+						  </small>
 						<ul id="fileList" class="list-group mt-2"></ul>
 					  </div>
 			      </div>
@@ -258,75 +260,109 @@
 
  
 
-<script>
-	$('#fileInput').on('change', function () {
-	    const files = this.files;
-	    const $fileList = $('#fileList');
-
-	    $fileList.empty();
-
-	    if (files.length === 0) {
-	        return;
-	    }
-
-	    $.each(files, function (index, file) {
-	        $fileList.append(
-	            `<li>${file.name}</li>`
-	        );
-	    });
-	});
-
-</script>
-
-<script>
+  <script>
   $(function () {
+      const MAX_FILE_COUNT = 5;
 
-    $("#confirmLogoutBtn").on("click", function (e) {
-      e.preventDefault();
+      // 파일 선택 시 개수 체크 및 미리보기
+      $('#fileInput').on('change', function () {
+          const files = this.files;
+          const $fileList = $('#fileList');
 
-      $.ajax({
-        url: "/user/logout",
-        type: "GET",
-        success: function () {
-          alert("로그아웃 성공");
-          location.href = "/";
-        }
+          // 파일 개수 체크
+          if (files.length > MAX_FILE_COUNT) {
+              alert(`파일은 최대 ${MAX_FILE_COUNT}개까지만 선택할 수 있습니다.`);
+              this.value = '';
+              $fileList.empty();
+              return;
+          }
+
+          $fileList.empty();
+
+          if (files.length > 0) {
+              $.each(files, function (index, file) {
+                  const li = $('<li class="list-group-item"></li>').text(file.name);
+                  $fileList.append(li);
+              });
+          }
       });
-    });
+
+      // 로그아웃
+      $("#confirmLogoutBtn").on("click", function (e) {
+          e.preventDefault();
+
+          $.ajax({
+              url: "/user/logout",
+              type: "GET",
+              success: function () {
+                  alert("로그아웃 성공");
+                  location.href = "/";
+              }
+          });
+      });
+
+      // 게시글 작성
+      $("#writeBtn").on("click", function () {
+		const MAX_FILE_COUNT = 5;	
+          
+          // 제목과 내용 검증
+          const title = $("input[name='title']").val().trim();
+          const content = $("textarea[name='content']").val().trim();
+          
+          if (!title) {
+              alert("제목을 입력해주세요.");
+              $("input[name='title']").focus();
+              return;
+          }
+          
+          if (!content) {
+              alert("내용을 입력해주세요.");
+              $("textarea[name='content']").focus();
+              return;
+          }
+
+          // 파일 개수 재검증
+          const files = $('#fileInput')[0].files;
+          if (files.length > MAX_FILE_COUNT) {
+              alert(`파일은 최대 ${MAX_FILE_COUNT}개까지만 첨부할 수 있습니다.`);
+              return;
+          }
+
+          // 작성 여부 확인
+          if (!confirm("게시글을 작성하시겠습니까?")) {
+              return;
+          }
+
+          // FormData 생성
+          const form = document.getElementById("writeForm");
+          const formData = new FormData(form);
+
+          $.ajax({
+              url: "/write",
+              type: "POST",
+              data: formData,
+              processData: false,
+              contentType: false,
+              success: function (response) {
+                  if (response.success) {
+                      alert(response.message);
+                      location.href = "/";
+                  } else {
+                      alert(response.message);
+                      if (response.redirectUrl) {
+                          location.href = response.redirectUrl;
+                      }
+                  }
+              },
+              error: function () {
+                  alert("서버 오류가 발생했습니다.");
+              }
+          });
+      });
 
   });
-</script>
+  </script>
 
-<script>
-	$('#writeForm').on('submit', function (e) {
-	    e.preventDefault();  // 기본 폼 제출 막기
-
-	    const formData = new FormData(this);  // 파일 포함 데이터 생성
-
-	    $.ajax({
-	      url: '/write',
-	      type: 'POST',
-	      data: formData,
-	      processData: false,
-	      contentType: false,
-	      success: function (response) {
-	        if (response.success) {
-	          alert(response.message);
-	          location.href = '/';
-	        } else {
-	          alert(response.message);
-	          if (response.redirectUrl) {
-	            location.href = response.redirectUrl;
-	          }
-	        }
-	      },
-	      error: function (xhr, status, error) {
-	        alert('게시글 작성에 실패했습니다: ' + error);
-	        console.error(xhr.responseText);
-	      }
-	    });
-	  });
-</script>
 
 
 </body>

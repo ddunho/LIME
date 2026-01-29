@@ -25,6 +25,10 @@ public interface PostMapper {
      List<Map<String, Object>> findFilesByPostUid(Long postUid);
      
      Map<String, Object> findFileByUid(Long fileUid);
+     
+     void updatePost(Map<String, Object> param);
+     void deleteFilesByPostUid(Long postUid);
+     
 
 
 }

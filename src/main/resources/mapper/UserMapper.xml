@@ -56,23 +56,23 @@
 	</select>
 	
 	<select id="findByEmail"
-            parameterType="string"
-            resultType="com.example.demo.user.domain.User">
+        parameterType="string"
+        resultType="com.example.demo.user.domain.User">
 
-        SELECT
-            user_uid        AS userUid,
-            username,
-            email,
-            password,
-            phone,
-            address,
-            address_detail  AS addressDetail,
-            address_extra   AS addressExtra,
-            zipcode,
-            signup_date     AS signupDate
-        FROM user_tb
-        WHERE email = #{email}
+    SELECT
+          user_uid        AS userUid        /* 유저번호 */
+        , username                            /* 사용자명 */
+        , email  
+        , password             
+        , phone          
+        , address     
+        , address_detail  AS addressDetail
+        , address_extra   AS addressExtra 
+        , zipcode     
+        , signup_date     AS signupDate
+    FROM user_tb
+    WHERE email = #{email}
 
-    </select>
+</select>
 
 </mapper>

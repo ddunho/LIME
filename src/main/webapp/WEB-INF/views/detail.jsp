@@ -83,44 +83,43 @@
             <div class="topbar-divider d-none d-sm-block"></div>
 
 			<li class="nav-item dropdown no-arrow">
+			  <c:choose>
+			    <c:when test="${not empty LOGIN_USER}">
+			      <a class="nav-link dropdown-toggle" href="#" id="userDropdown" role="button"
+			         data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+			        <span class="mr-2 d-none d-lg-inline text-gray-600 small">
+			          ${LOGIN_USER.username}
+			        </span>
+			        <img class="img-profile rounded-circle" src="/img/undraw_profile.svg" />
+			      </a>
+			      
+			      
+			      <div class="dropdown-menu dropdown-menu-right shadow animated--grow-in"
+			           aria-labelledby="userDropdown">
+			        <a class="dropdown-item" href="#">
+			          <i class="fas fa-user fa-sm fa-fw mr-2 text-gray-400"></i>
+			          Profile
+			        </a>
+			        <div class="dropdown-divider"></div>
+			        <a class="dropdown-item" href="#"
+			           data-toggle="modal" data-target="#logoutModal">
+			          <i class="fas fa-sign-out-alt fa-sm fa-fw mr-2 text-gray-400"></i>
+			          Logout
+			        </a>
+			      </div>
+			    </c:when>
 
-						  <c:choose>
-						    <c:when test="${not empty LOGIN_USER}">
-						      <a class="nav-link dropdown-toggle" href="#" id="userDropdown" role="button"
-						         data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
-						        <span class="mr-2 d-none d-lg-inline text-gray-600 small">
-						          ${LOGIN_USER.username}
-						        </span>
-						        <img class="img-profile rounded-circle" src="/img/undraw_profile.svg" />
-						      </a>
-						      
-						      
-						      <div class="dropdown-menu dropdown-menu-right shadow animated--grow-in"
-						           aria-labelledby="userDropdown">
-						        <a class="dropdown-item" href="#">
-						          <i class="fas fa-user fa-sm fa-fw mr-2 text-gray-400"></i>
-						          Profile
-						        </a>
-						        <div class="dropdown-divider"></div>
-						        <a class="dropdown-item" href="#"
-						           data-toggle="modal" data-target="#logoutModal">
-						          <i class="fas fa-sign-out-alt fa-sm fa-fw mr-2 text-gray-400"></i>
-						          Logout
-						        </a>
-						      </div>
-						    </c:when>
+			    <c:otherwise>
+			      <a class="nav-link" href="/login">
+			        <span class="mr-2 d-none d-lg-inline text-gray-600 small">
+			          guest
+			        </span>
+			        <img class="img-profile rounded-circle" src="/img/undraw_profile.svg" />
+			      </a>
+			    </c:otherwise>
+			  </c:choose>
 
-						    <c:otherwise>
-						      <a class="nav-link" href="/login">
-						        <span class="mr-2 d-none d-lg-inline text-gray-600 small">
-						          guest
-						        </span>
-						        <img class="img-profile rounded-circle" src="/img/undraw_profile.svg" />
-						      </a>
-						    </c:otherwise>
-						  </c:choose>
-
-						</li>
+			</li>
           </ul>
         </nav>
         <!-- End of Topbar -->
@@ -184,9 +183,9 @@
                         <li class="list-group-item d-flex justify-content-between align-items-center">
                           <span>
                             <i class="fas fa-file mr-2"></i>
-                            ${file.originalName}
+                            ${file.ORIGINALNAME}
                           </span>
-                          <a href="/download?fileUid=${file.fileUid}" class="btn btn-sm btn-outline-primary">
+                          <a href="/download?fileUid=${file.FILEUID}" class="btn btn-sm btn-outline-primary">
                             <i class="fas fa-download"></i> 다운로드
                           </a>
                         </li>
@@ -194,7 +193,42 @@
                     </ul>
                   </div>
                 </c:if>
+				
+				<!-- ========== 댓글 섹션 추가 ========== -->
+                <div class="card-body border-top comment-section">
+                  <h6 class="font-weight-bold text-primary mb-3">
+                    <i class="fas fa-comments mr-2"></i>댓글 <span id="commentCount" class="badge badge-primary">0</span>
+                  </h6>
 
+                  <!-- 댓글 작성 폼 -->
+                  <c:choose>
+                    <c:when test="${not empty LOGIN_USER}">
+                      <div class="comment-write">
+                        <textarea id="commentContent" placeholder="댓글을 입력하세요"></textarea>
+                        <input type="hidden" id="postUid" value="${post.POSTUID}" />
+                        <input type="hidden" id="parentCommentUid" value="" />
+                        <div class="btn-group">
+                          <button type="button" class="btn btn-sm btn-secondary" id="cancelReplyBtn" style="display:none;">
+                            취소
+                          </button>
+                          <button type="button" class="btn btn-sm btn-primary" id="submitCommentBtn">
+                            <i class="fas fa-paper-plane mr-1"></i>등록
+                          </button>
+                        </div>
+                      </div>
+                    </c:when>
+                    <c:otherwise>
+                      <div class="alert alert-info">
+                        <i class="fas fa-info-circle mr-2"></i>
+                        댓글을 작성하려면 <a href="/login" class="alert-link">로그인</a>이 필요합니다.
+                      </div>
+                    </c:otherwise>
+                  </c:choose>
+
+                  <!-- 댓글 목록 -->
+                  <div id="commentList"></div>
+                </div>
+                <!-- ========== 댓글 섹션 끝 ========== -->
               </div>
             </div>
           </div>
@@ -245,10 +279,10 @@
   </div>
 
   <script>
+    // 로그아웃
     $(function () {
       $("#confirmLogoutBtn").on("click", function (e) {
         e.preventDefault();
-
         $.ajax({
           url: "/user/logout",
           type: "GET",
@@ -259,6 +293,169 @@
         });
       });
     });
+
+    // 댓글 기능
+    $(document).ready(function() {
+      loadCommentList();
+      
+      $('#submitCommentBtn').on('click', insertComment);
+      $('#cancelReplyBtn').on('click', cancelReply);
+    });
+
+    // 댓글 목록 조회
+    function loadCommentList() {
+      $.ajax({
+        url: '/comment/list',
+        type: 'GET',
+        data: { post_uid: $('#postUid').val() },
+        success: function(response) {
+          if (response.success) {
+            displayCommentList(response.data);
+            $('#commentCount').text(response.data.length);
+          }
+        }
+      });
+    }
+
+    // 댓글 목록 표시
+    function displayCommentList(comments) {
+      var html = '';
+      
+      if (comments.length === 0) {
+        html = '<div style="text-align:center; padding:40px; color:#999;">댓글이 없습니다.</div>';
+      } else {
+        $.each(comments, function(index, comment) {
+          var depth = parseInt(comment.DEPTH) || 0;
+          var isMyComment = '${LOGIN_USER.userUid}' == comment.USER_UID;
+          
+          // depth에 따른 들여쓰기 (10px씩)
+          var indentStyle = depth > 0 ? 'margin-left: ' + (depth * 10) + 'px; border-left: 2px solid #e3e6f0; padding-left: 10px;' : '';
+          
+          html += '<div class="comment-item" style="' + indentStyle + '">';
+          html += '  <div class="comment-header">';
+          
+          // 답글 표시
+          if (depth > 0) {
+            html += '    <i class="fas fa-reply" style="color:#999; margin-right:5px;"></i>';
+          }
+          
+          html += '    <strong>' + (comment.USERNAME || '익명') + '</strong> ';
+          html += '    <small style="color:#999;">' + comment.WRITE_DATE + '</small>';
+          html += '  </div>';
+          html += '  <div class="comment-content">' + comment.CONTENT + '</div>';
+          html += '  <div class="comment-actions">';
+          
+          if (isMyComment) {
+            html += '    <button class="btn btn-sm btn-outline-primary" onclick="editComment(' + comment.COMMENT_UID + ')">수정</button>';
+            html += '    <button class="btn btn-sm btn-outline-danger" onclick="deleteComment(' + comment.COMMENT_UID + ')">삭제</button>';
+          }
+          
+          // 로그인한 사용자는 모든 댓글에 답글 가능 (무한 대댓글)
+          if ('${not empty LOGIN_USER}' == 'true') {
+            html += '    <button class="btn btn-sm btn-outline-secondary" onclick="replyComment(' + comment.COMMENT_UID + ', \'' + (comment.USERNAME || '익명') + '\')">답글</button>';
+          }
+          
+          html += '  </div>';
+          html += '</div>';
+        });
+      }
+      
+      $('#commentList').html(html);
+    }
+
+    // 댓글 등록
+    function insertComment() {
+      var content = $('#commentContent').val().trim();
+      if (!content) {
+        alert('댓글 내용을 입력해주세요.');
+        return;
+      }
+      
+      var data = {
+        content: content,
+        post_uid: $('#postUid').val()
+      };
+      
+      var parentUid = $('#parentCommentUid').val();
+      if (parentUid) {
+        data.parent_comment_uid = parentUid;
+      }
+      
+      $.ajax({
+        url: '/comment/insert',
+        type: 'POST',
+        data: data,
+        success: function(response) {
+          if (response.success) {
+            $('#commentContent').val('');
+            $('#parentCommentUid').val('');
+            $('#commentContent').attr('placeholder', '댓글을 입력하세요');
+            $('#cancelReplyBtn').hide();
+            loadCommentList();
+          } else {
+            alert(response.message);
+          }
+        }
+      });
+    }
+
+    // 답글 작성 (누구에게 답글 다는지 표시)
+    function replyComment(commentUid, username) {
+      $('#parentCommentUid').val(commentUid);
+      $('#commentContent').attr('placeholder', username + '님에게 답글 작성 중...');
+      $('#commentContent').focus();
+      $('#cancelReplyBtn').show();
+    }
+
+    // 답글 취소
+    function cancelReply() {
+      $('#parentCommentUid').val('');
+      $('#commentContent').val('');
+      $('#commentContent').attr('placeholder', '댓글을 입력하세요');
+      $('#cancelReplyBtn').hide();
+    }
+
+    // 댓글 수정
+    function editComment(commentUid) {
+      var newContent = prompt('댓글을 수정하세요:');
+      if (newContent && newContent.trim()) {
+        $.ajax({
+          url: '/comment/update',
+          type: 'POST',
+          data: {
+            comment_uid: commentUid,
+            content: newContent
+          },
+          success: function(response) {
+            if (response.success) {
+              loadCommentList();
+            } else {
+              alert(response.message);
+            }
+          }
+        });
+      }
+    }
+
+    // 댓글 삭제
+    function deleteComment(commentUid) {
+      if (!confirm('댓글을 삭제하시겠습니까?')) {
+        return;
+      }
+      
+      $.ajax({
+        url: '/comment/delete',
+        type: 'POST',
+        data: { comment_uid: commentUid },
+        success: function(response) {
+          if (response.success) {
+            loadCommentList();
+          } else {
+            alert(response.message);
+          }
+        }
+      });
+    }
   </script>
 
 </body>

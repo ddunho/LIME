@@ -6,40 +6,40 @@
 <mapper namespace="com.example.demo.post.mapper.PostMapper">
 
 	<select id="findAll" resultType="map">
-    SELECT
-          P.POST_UID AS postUid        /* 게시글 번호 */
-        , P.TITLE AS title          /* 제목 */
-        , P.WRITE_DATE AS writeDate      /* 작성일 */
-        , U.USERNAME AS username       /* 작성자 닉네임 */
-    FROM POST_TB P
-    JOIN USER_TB U
-      ON P.USER_UID = U.USER_UID
-    WHERE P.DELETEYN = 'N'
-    ORDER BY P.POST_UID DESC
+	    SELECT
+	          P.POST_UID     AS postUid     /* 게시글 번호 */
+	        , P.TITLE        AS title       /* 제목 */
+	        , P.WRITE_DATE   AS writeDate   /* 작성일 */
+	        , U.USERNAME     AS username    /* 작성자 닉네임 */
+	    FROM post_tb P
+	    JOIN user_tb U
+	      ON P.USER_UID = U.USER_UID
+	    WHERE P.DELETEYN = 'N'
+	    ORDER BY P.POST_UID DESC
 	</select>
 
 	<select id="findPage" resultType="map">
-    SELECT
-          postUid
-        , title
-        , writeDate
-        , username
-    FROM (
-        SELECT
-              P.POST_UID   AS postUid        /* 게시글 번호 */
-            , P.TITLE      AS title          /* 제목 */
-            , P.WRITE_DATE AS writeDate      /* 작성일 */
-            , U.USERNAME   AS username       /* 작성자 닉네임 */
-            , ROW_NUMBER() OVER (
-                ORDER BY P.POST_UID DESC
-              ) AS rn                        /* 페이징용 순번 */
-        FROM POST_TB P
-        JOIN USER_TB U
-          ON P.USER_UID = U.USER_UID
-        WHERE P.DELETEYN = 'N'
-    )
-    WHERE rn BETWEEN #{start} AND #{end}
-</select>
+	    SELECT
+	          postUid
+	        , title
+	        , writeDate
+	        , username
+	    FROM (
+	        SELECT
+	              P.POST_UID     AS postUid     /* 게시글 번호 */
+	            , P.TITLE        AS title       /* 제목 */
+	            , P.WRITE_DATE   AS writeDate   /* 작성일 */
+	            , U.USERNAME     AS username    /* 작성자 닉네임 */
+	            , ROW_NUMBER() OVER (
+	                  ORDER BY P.POST_UID DESC
+	              )               AS rn         /* 페이징용 순번 */
+	        FROM post_tb P
+	        JOIN user_tb U
+	          ON P.USER_UID = U.USER_UID
+	        WHERE P.DELETEYN = 'N'
+	    )
+	    WHERE rn BETWEEN #{start} AND #{end}
+	</select>
 
 	
 	<select id="countAll" resultType="int">
@@ -50,20 +50,21 @@
 	<!-- 게시글 저장 -->
     <insert id="insertPost" parameterType="map">
 	    INSERT INTO post_tb (
-	        post_uid,
-	        title,
-	        content,
-	        write_date,
-	        user_uid,
-	        deleteyn
+	          post_uid
+	        , title
+	        , content
+	        , write_date
+	        , user_uid
+	        , deleteyn
 	    ) VALUES (
-	        post_seq.NEXTVAL,
-	        #{title},
-	        #{content},
-	        SYSDATE,
-	        #{userUid},
-	        'N'
+	          post_seq.NEXTVAL
+	        , #{title}
+	        , #{content}
+	        , SYSDATE
+	        , #{userUid}
+	        , 'N'
 	    )
+	
 	    <selectKey keyProperty="postUid" resultType="long" order="AFTER">
 	        SELECT post_seq.CURRVAL FROM DUAL
 	    </selectKey>
@@ -71,58 +72,73 @@
 
     <!-- 파일 저장 -->
     <insert id="insertPostFile" parameterType="map">
-        INSERT INTO post_file_tb (
-            file_uid,
-            original_name,
-            stored_name,
-            file_path,
-            file_type,
-            upload_date,
-            post_uid
-        ) VALUES (
-            post_file_seq.NEXTVAL,
-            #{originalName},
-            #{storedName},
-            #{filePath},
-            #{fileType},
-            SYSDATE,
-            #{postUid}
-        )
-    </insert>
+	    INSERT INTO post_file_tb (
+	          file_uid
+	        , original_name
+	        , stored_name
+	        , file_path
+	        , file_type
+	        , upload_date
+	        , post_uid
+	    ) VALUES (
+	          post_file_seq.NEXTVAL
+	        , #{originalName}
+	        , #{storedName}
+	        , #{filePath}
+	        , #{fileType}
+	        , SYSDATE
+	        , #{postUid}
+	    )
+	</insert>
     
     <select id="findById" resultType="map">
 	    SELECT
-	        p.post_uid   AS postUid,
-	        p.title,
-	        p.content,
-	        p.write_date AS writeDate,
-	        u.username
-	    FROM post_tb p
-	    JOIN user_tb u ON p.user_uid = u.user_uid
-	    WHERE p.post_uid = #{postUid}
+	          P.POST_UID     AS postUid     /* 게시글 번호 */
+	        , P.TITLE        AS title       /* 제목 */
+	        , P.CONTENT      AS content     /* 내용 */
+	        , P.WRITE_DATE   AS writeDate   /* 작성일 */
+	        , U.USERNAME     AS username    /* 작성자 */
+	    FROM post_tb P
+	    JOIN user_tb U
+	      ON P.USER_UID = U.USER_UID
+	    WHERE P.POST_UID = #{postUid}
 	</select>
 
 	<select id="findFilesByPostUid" resultType="map">
 	    SELECT
-	        file_uid AS "fileUid",
-	        original_name AS "originalName",
-	        stored_name AS "storedName",
-	        file_path AS "filePath"
+	          file_uid        AS fileUid        /* 파일 번호 */
+	        , original_name   AS originalName   /* 원본 파일명 */
+	        , stored_name     AS storedName     /* 저장 파일명 */
+	        , file_path       AS filePath       /* 파일 경로 */
 	    FROM post_file_tb
 	    WHERE post_uid = #{postUid}
 	</select>
 	
 	<select id="findFileByUid" resultType="map">
-        SELECT
-            file_uid AS fileUid,
-            original_name AS originalName,
-            stored_name AS storedName,
-            file_path AS filePath,
-            file_type AS fileType
-        FROM post_file_tb
-        WHERE file_uid = #{fileUid}
-    </select>
+	    SELECT
+	          file_uid        AS fileUid        /* 파일 번호 */
+	        , original_name   AS originalName   /* 원본 파일명 */
+	        , stored_name     AS storedName     /* 저장 파일명 */
+	        , file_path       AS filePath       /* 파일 경로 */
+	        , file_type       AS fileType       /* MIME 타입 */
+	    FROM post_file_tb
+	    WHERE file_uid = #{fileUid}
+	</select>
+	
+		<!-- 게시글 수정 -->
+	<update id="updatePost" parameterType="map">
+	    UPDATE post_tb
+	    SET TITLE = #{title},
+	        CONTENT = #{content},
+	        MODIFY_DATE = SYSDATE
+	    WHERE POST_UID = #{postUid}
+	</update>
 
+	<!-- 게시글의 모든 파일 삭제 -->
+	<delete id="deleteFilesByPostUid" parameterType="long">
+	    DELETE FROM post_file_tb
+	    WHERE POST_UID = #{postUid}
+	</delete>
 
 
 </mapper>

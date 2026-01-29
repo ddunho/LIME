@@ -170,7 +170,16 @@
 						<td>${post.USERNAME}</td>
 						<td>${post.TITLE}</td>
 						<td>${post.WRITEDATE}</td>
-				      <td>0개</td>
+						<td>
+						  <c:choose>
+						    <c:when test="${post.COMMENT_COUNT > 0}">
+						      <span class="badge badge-primary">${post.COMMENT_COUNT}개</span>
+						    </c:when>
+						    <c:otherwise>
+						      <span class="text-muted">0개</span>
+						    </c:otherwise>
+						  </c:choose>
+						</td>
 				    </tr>
 				  </c:forEach>
 				</tbody>
@@ -202,11 +211,20 @@
 			  </nav>
 
 
-              <a href="/write">
-                <button type="button" class="btn btn-primary btn float-right">
-                  게시글 작성
-                </button>
-              </a>
+			  <c:choose>
+			    <c:when test="${not empty LOGIN_USER}">
+			      <a href="/write" class="btn btn-primary float-right">
+			        게시글 작성
+			      </a>
+			    </c:when>
+				<c:otherwise>
+				    <a href="#" class="btn btn-primary float-right"
+				       onclick="if(confirm('로그인 하시겠습니까?')) { location.href='/login'; } return false;">
+				      게시글 작성
+				    </a>
+				  </c:otherwise>
+			  </c:choose>
+
 
             </div>
           </div>

@@ -1,0 +1,123 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+  PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+  "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.example.demo.comment.mapper.CommentMapper">
+	<!-- 댓글 등록 -->
+    <insert id="insertComment" parameterType="map">
+        <selectKey keyProperty="comment_uid" resultType="long" order="BEFORE">
+            SELECT comment_seq.NEXTVAL FROM DUAL
+        </selectKey>
+        INSERT INTO comment_tb (
+            comment_uid,
+            content,
+            depth,
+            post_uid,
+            user_uid,
+            parent_comment_uid,
+            write_date,
+            modify_date,
+            deleteyn
+        ) VALUES (
+            #{comment_uid},
+            #{content},
+            #{depth, jdbcType=NUMERIC},
+            #{post_uid},
+            #{user_uid},
+            #{parent_comment_uid, jdbcType=NUMERIC},
+            SYSDATE,
+            SYSDATE,
+            'N'
+        )
+    </insert>
+
+    <!-- 댓글 수정 -->
+    <update id="updateComment" parameterType="map">
+        UPDATE comment_tb
+        SET content = #{content},
+            modify_date = SYSDATE
+        WHERE comment_uid = #{comment_uid}
+          AND user_uid = #{user_uid}
+          AND deleteyn = 'N'
+    </update>
+
+    <!-- 댓글 삭제 (논리적 삭제) -->
+    <update id="deleteComment" parameterType="map">
+        UPDATE comment_tb
+        SET deleteyn = 'Y',
+            modify_date = SYSDATE
+        WHERE comment_uid = #{comment_uid}
+          AND user_uid = #{user_uid}
+          AND deleteyn = 'N'
+    </update>
+
+    <!-- 특정 게시글의 댓글 목록 조회 (계층구조) -->
+    <!-- 특정 게시글의 댓글 목록 조회 (계층구조) -->
+	<select id="selectCommentList" parameterType="map" resultType="map">
+	    SELECT
+	        c.comment_uid,
+	        TO_CHAR(c.content) AS content,
+	        TO_CHAR(c.write_date, 'YYYY-MM-DD HH24:MI:SS') AS write_date,
+	        c.modify_date,
+	        c.depth,
+	        c.deleteyn,
+	        c.parent_comment_uid,
+	        c.user_uid,
+	        c.post_uid,
+	        u.username
+	    FROM comment_tb c
+	    LEFT JOIN user_tb u ON c.user_uid = u.user_uid
+	    WHERE c.post_uid = #{post_uid}
+	      AND c.deleteyn = 'N'
+	    START WITH c.parent_comment_uid IS NULL
+	    CONNECT BY PRIOR c.comment_uid = c.parent_comment_uid
+	    ORDER SIBLINGS BY c.write_date ASC
+	</select>
+
+    <!-- 특정 댓글 조회 -->
+    <select id="selectComment" parameterType="map" resultType="map">
+        SELECT 
+            comment_uid,
+            TO_CHAR(content) AS content,
+            write_date,
+            modify_date,
+            depth,
+            deleteyn,
+            parent_comment_uid,
+            user_uid,
+            post_uid
+        FROM comment_tb
+        WHERE comment_uid = #{comment_uid}
+          AND deleteyn = 'N'
+    </select>
+
+    <!-- 대댓글 개수 조회 -->
+    <select id="selectReplyCount" parameterType="map" resultType="int">
+        SELECT COUNT(*)
+        FROM comment_tb
+        WHERE parent_comment_uid = #{comment_uid}
+          AND deleteyn = 'N'
+    </select>
+    <!-- 게시글별 댓글 수 조회 (댓글 + 답글 모두 포함) -->
+		<select id="selectCommentCountByPostUid" parameterType="long" resultType="int">
+		    SELECT COUNT(*)
+		    FROM comment_tb
+		    WHERE post_uid = #{post_uid}
+		      AND deleteyn = 'N'
+		</select>
+	
+	<!-- 여러 게시글의 댓글 수 일괄 조회 -->
+		<select id="selectCommentCountByPostUids" parameterType="list" resultType="map">
+		    SELECT 
+		        post_uid,
+		        COUNT(*) as comment_count
+		    FROM comment_tb
+		    WHERE post_uid IN
+		    <foreach collection="list" item="postUid" open="(" separator="," close=")">
+		        #{postUid}
+		    </foreach>
+		    AND deleteyn = 'N'
+		    GROUP BY post_uid
+		</select>
+</mapper>

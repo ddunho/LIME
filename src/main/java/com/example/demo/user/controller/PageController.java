@@ -32,10 +32,10 @@ public class PageController {
 //        return "detail";
 //    }
 
-    @GetMapping("/modify")
-    public String modify() {
-        return "modify";
-    }
+//    @GetMapping("/modify")
+//    public String modify() {
+//        return "modify";
+//    }
 
     @GetMapping("/profile")
     public String profile() {

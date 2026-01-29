@@ -13,6 +13,9 @@ public interface PostService {
 	Map<String, Object> findById(Long postUid);
 	List<Map<String, Object>> findFilesByPostUid(Long postUid);
 	Map<String, Object> findFileByUid(Long fileUid);
+    void modify(Map<String, Object> param, List<MultipartFile> files);
+    Map<String, Object> modifyPost(Long postUid, String title, String content, MultipartFile[] uploadFile);
+    Map<String, Object> getPostForModify(Long postUid);
 
 
 }

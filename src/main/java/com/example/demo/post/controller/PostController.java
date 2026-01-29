@@ -1,22 +1,25 @@
 package com.example.demo.post.controller;
 
 import com.example.demo.post.service.PostService;
+import com.example.demo.comment.mapper.CommentMapper;
 import com.example.demo.user.domain.User;
 
 import jakarta.servlet.http.HttpServletResponse;
 import jakarta.servlet.http.HttpSession;
 
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.ResponseBody;
 
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.OutputStream;
-import java.util.ArrayList;
+import java.net.URLEncoder;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.stream.Collectors;
 
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
@@ -28,6 +31,12 @@ import org.springframework.web.multipart.MultipartFile;
 public class PostController {
 
     private final PostService postService;
+    
+    @Autowired
+    private CommentMapper commentMapper;
+    
+    // 파일 개수 제한 상수
+    private static final int MAX_FILE_COUNT = 5;
 
     public PostController(PostService postService) {
         this.postService = postService;
@@ -38,9 +47,68 @@ public class PostController {
             @RequestParam(defaultValue = "1") int page,
             Model model
     ) {
+        // 게시글 목록 조회
+        List<Map<String, Object>> posts = postService.findPage(page);
+        
+        // 게시글이 있을 때만 댓글 수 조회
+        if (posts != null && !posts.isEmpty()) {
+            try {
+                // 게시글 UID 목록 추출
+                List<Long> postUids = posts.stream()
+                    .map(post -> {
+                        Object postUidObj = post.get("POSTUID");
+                        if (postUidObj instanceof Number) {
+                            return ((Number) postUidObj).longValue();
+                        }
+                        return Long.parseLong(postUidObj.toString());
+                    })
+                    .collect(Collectors.toList());
+                
+                // 댓글 수 일괄 조회
+                List<Map<String, Object>> commentCounts = 
+                    commentMapper.selectCommentCountByPostUids(postUids);
+                
+                // Map으로 변환 (postUid -> commentCount)
+                Map<Long, Integer> commentCountMap = commentCounts.stream()
+                    .collect(Collectors.toMap(
+                        m -> {
+                            Object postUidObj = m.get("POST_UID");
+                            if (postUidObj instanceof Number) {
+                                return ((Number) postUidObj).longValue();
+                            }
+                            return Long.parseLong(postUidObj.toString());
+                        },
+                        m -> {
+                            Object countObj = m.get("COMMENT_COUNT");
+                            if (countObj instanceof Number) {
+                                return ((Number) countObj).intValue();
+                            }
+                            return Integer.parseInt(countObj.toString());
+                        }
+                    ));
+                
+                // 각 게시글에 댓글 수 추가
+                posts.forEach(post -> {
+                    Object postUidObj = post.get("POSTUID");
+                    Long postUid;
+                    if (postUidObj instanceof Number) {
+                        postUid = ((Number) postUidObj).longValue();
+                    } else {
+                        postUid = Long.parseLong(postUidObj.toString());
+                    }
+                    post.put("COMMENT_COUNT", commentCountMap.getOrDefault(postUid, 0));
+                });
+                
+            } catch (Exception e) {
+                // 댓글 수 조회 실패 시 0으로 설정
+                e.printStackTrace();
+                posts.forEach(post -> post.put("COMMENT_COUNT", 0));
+            }
+        }
+        
         int totalPages = postService.getTotalPages();
 
-        model.addAttribute("posts", postService.findPage(page));
+        model.addAttribute("posts", posts);
         model.addAttribute("currentPage", page);
         model.addAttribute("totalPages", totalPages);
 
@@ -67,11 +135,31 @@ public class PostController {
                 return result;
             }
 
+            // 파일 개수 제한 검증
+            if (uploadFiles != null && uploadFiles.length > MAX_FILE_COUNT) {
+                result.put("success", false);
+                result.put("message", "파일은 최대 " + MAX_FILE_COUNT + "개까지만 첨부할 수 있습니다.");
+                return result;
+            }
+
             Long userUid = loginUser.getUserUid();
 
             List<MultipartFile> fileList = null;
             if (uploadFiles != null && uploadFiles.length > 0) {
-                fileList = Arrays.asList(uploadFiles);
+                // 빈 파일 필터링
+                fileList = Arrays.stream(uploadFiles)
+                    .filter(file -> file != null && 
+                            !file.isEmpty() && 
+                            file.getOriginalFilename() != null && 
+                            !file.getOriginalFilename().trim().isEmpty())
+                    .collect(Collectors.toList());
+                
+                // 필터링 후 개수 재검증
+                if (fileList.size() > MAX_FILE_COUNT) {
+                    result.put("success", false);
+                    result.put("message", "파일은 최대 " + MAX_FILE_COUNT + "개까지만 첨부할 수 있습니다.");
+                    return result;
+                }
             }
 
             Long postUid = postService.write(title, content, fileList, userUid);
@@ -133,8 +221,14 @@ public class PostController {
             return;
         }
 
-        response.setContentType("application/octet-stream");
-        response.setHeader("Content-Disposition", "attachment; filename=\"" + originalName + "\"");
+        String encodedFileName = URLEncoder.encode(originalName, "UTF-8")
+                .replaceAll("\\+", "%20");
+
+        response.setHeader(
+            "Content-Disposition",
+            "attachment; filename*=UTF-8''" + encodedFileName
+        );
+
         response.setContentLengthLong(file.length());
 
         // 파일 전송
@@ -152,7 +246,55 @@ public class PostController {
         }
     }
     
+    @GetMapping("/modify")
+    public String modifyPage(@RequestParam("postUid") Long postUid, Model model) {
+        
+        Map<String, Object> data = postService.getPostForModify(postUid);
+        
+        model.addAttribute("post", data.get("post"));
+        model.addAttribute("fileList", data.get("fileList"));
+        
+        return "modify"; // modify.jsp
+    }
 
-
-
+    /**
+     * 게시글 수정 처리
+     */
+    @PostMapping("/modify")
+    @ResponseBody
+    public Map<String, Object> modifyPost(
+            @RequestParam("postUid") Long postUid,
+            @RequestParam("title") String title,
+            @RequestParam("content") String content,
+            @RequestParam(value = "uploadFile", required = false) MultipartFile[] uploadFile) {
+        
+        System.out.println("게시글 수정 요청 - postUid: " + postUid + ", title: " + title);
+        
+        Map<String, Object> result = new HashMap<>();
+        
+        // 파일 개수 제한 검증
+        if (uploadFile != null && uploadFile.length > MAX_FILE_COUNT) {
+            result.put("success", false);
+            result.put("message", "파일은 최대 " + MAX_FILE_COUNT + "개까지만 첨부할 수 있습니다.");
+            return result;
+        }
+        
+        // 빈 파일 필터링 및 재검증
+        if (uploadFile != null) {
+            long validFileCount = Arrays.stream(uploadFile)
+                .filter(file -> file != null && 
+                        !file.isEmpty() && 
+                        file.getOriginalFilename() != null && 
+                        !file.getOriginalFilename().trim().isEmpty())
+                .count();
+            
+            if (validFileCount > MAX_FILE_COUNT) {
+                result.put("success", false);
+                result.put("message", "파일은 최대 " + MAX_FILE_COUNT + "개까지만 첨부할 수 있습니다.");
+                return result;
+            }
+        }
+        
+        return postService.modifyPost(postUid, title, content, uploadFile);
+    }
 }
