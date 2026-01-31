@@ -180,6 +180,31 @@ public class PostServiceImpl implements PostService {
         
         return result;
     }
+    @Transactional
+    @Override
+    public void deletePost(Long postUid) {
+
+        // 1. 첨부파일 조회
+        List<Map<String, Object>> files = postMapper.selectFilesByPostUid(postUid);
+
+        // 2. 실제 파일 삭제
+        for (Map<String, Object> file : files) {
+            File f = new File(
+                file.get("FILEPATH").toString(),
+                file.get("STOREDNAME").toString()
+            );
+            if (f.exists()) {
+                f.delete();
+            }
+        }
+
+        // 3. 파일 DB 삭제 (하드 삭제)
+        postMapper.deleteFilesByPostUid(postUid);
+
+        // 4. 게시글 소프트 삭제
+        postMapper.updatePostDeleteYn(postUid);
+    }
+    
 
     /**
      * 파일 저장 (기존 write 로직 재사용)

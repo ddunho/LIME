@@ -27,7 +27,15 @@ public interface PostMapper {
      Map<String, Object> findFileByUid(Long fileUid);
      
      void updatePost(Map<String, Object> param);
-     void deleteFilesByPostUid(Long postUid);
+     
+     // 게시글 소프트 삭제
+     int updatePostDeleteYn(Long postUid);
+
+     // 게시글 첨부파일 조회
+     List<Map<String, Object>> selectFilesByPostUid(Long postUid);
+
+     // 게시글 첨부파일 DB 삭제 (하드)
+     int deleteFilesByPostUid(Long postUid);
      
 
 

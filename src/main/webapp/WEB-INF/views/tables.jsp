@@ -166,21 +166,40 @@
                 </thead>
 				<tbody>
 				  <c:forEach var="post" items="${posts}">
-					<tr style="cursor: pointer;" onclick="location.href='/detail?postUid=${post.POSTUID}'">
-						<td>${post.USERNAME}</td>
-						<td>${post.TITLE}</td>
-						<td>${post.WRITEDATE}</td>
-						<td>
-						  <c:choose>
-						    <c:when test="${post.COMMENT_COUNT > 0}">
-						      <span class="badge badge-primary">${post.COMMENT_COUNT}개</span>
-						    </c:when>
-						    <c:otherwise>
-						      <span class="text-muted">0개</span>
-						    </c:otherwise>
-						  </c:choose>
-						</td>
-				    </tr>
+					<c:choose>
+					  <c:when test="${post.DELETEYN eq 'N'}">
+					    <tr style="cursor:pointer;"
+					        onclick="location.href='/detail?postUid=${post.POSTUID}'">
+					      <td>${post.USERNAME}</td>
+					      <td>${post.TITLE}</td>
+					      <td>${post.WRITEDATE}</td>
+					      <td>
+					        <c:choose>
+					          <c:when test="${post.COMMENT_COUNT > 0}">
+					            <span class="badge badge-primary">${post.COMMENT_COUNT}개</span>
+					          </c:when>
+					          <c:otherwise>
+					            <span class="text-muted">0개</span>
+					          </c:otherwise>
+					        </c:choose>
+					      </td>
+					    </tr>
+					  </c:when>
+					  <c:otherwise>
+					    <tr style="cursor:not-allowed;">
+					      <td>${post.USERNAME}</td>
+					      <td>
+					        <span class="text-muted font-italic">
+					          삭제된 게시글입니다.
+					        </span>
+					      </td>
+					      <td>${post.WRITEDATE}</td>
+					      <td>
+					        <span class="text-muted">-</span>
+					      </td>
+					    </tr>
+					  </c:otherwise>
+					</c:choose>
 				  </c:forEach>
 				</tbody>
 

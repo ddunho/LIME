@@ -16,6 +16,7 @@ public interface PostService {
     void modify(Map<String, Object> param, List<MultipartFile> files);
     Map<String, Object> modifyPost(Long postUid, String title, String content, MultipartFile[] uploadFile);
     Map<String, Object> getPostForModify(Long postUid);
+    void deletePost(Long postUid);
 
 
 }

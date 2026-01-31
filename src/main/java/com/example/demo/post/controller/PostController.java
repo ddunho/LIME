@@ -177,6 +177,24 @@ public class PostController {
         return result;
     }
     
+    @PostMapping("/post/delete")
+    @ResponseBody
+    public Map<String, Object> deletePost(@RequestParam Long postUid) {
+
+        Map<String, Object> result = new HashMap<>();
+
+        try {
+            postService.deletePost(postUid);
+            result.put("success", true);
+        } catch (Exception e) {
+            result.put("success", false);
+            result.put("message", "게시글 삭제 실패");
+        }
+
+        return result;
+    }
+
+    
     @GetMapping("/detail")
     public String detail(
             @RequestParam Long postUid,

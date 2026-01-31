@@ -144,46 +144,36 @@ public class CommentController {
      */
     @PostMapping("/delete")
     @ResponseBody
-    public Map<String, Object> deleteComment(@RequestParam Map<String, Object> params, 
+    public Map<String, Object> deleteComment(@RequestParam Long commentUid,
                                              HttpSession session) {
+
         Map<String, Object> result = new HashMap<>();
-        
+
         try {
-            // 세션에서 User 객체로 가져오기
             User loginUser = (User) session.getAttribute("LOGIN_USER");
-            
             if (loginUser == null) {
                 result.put("success", false);
                 result.put("message", "로그인이 필요합니다.");
                 return result;
             }
-            
-            // User 객체에서 userUid 추출
-            params.put("user_uid", loginUser.getUserUid());
-            
-            // 필수 파라미터 검증
-            if (params.get("comment_uid") == null) {
-                result.put("success", false);
-                result.put("message", "댓글 정보가 없습니다.");
-                return result;
-            }
-            
-            boolean deleteResult = commentService.deleteComment(params);
-            
+
+            boolean deleteResult = commentService.deleteComment(commentUid);
+
             if (deleteResult) {
                 result.put("success", true);
                 result.put("message", "댓글이 삭제되었습니다.");
             } else {
                 result.put("success", false);
-                result.put("message", "댓글 삭제에 실패했습니다. 권한을 확인해주세요.");
+                result.put("message", "댓글 삭제에 실패했습니다.");
             }
-            
+
         } catch (Exception e) {
             e.printStackTrace();
             result.put("success", false);
             result.put("message", "댓글 삭제 중 오류가 발생했습니다.");
         }
-        
+
         return result;
     }
+
 }

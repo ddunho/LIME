@@ -14,9 +14,6 @@ public interface CommentMapper {
     // 댓글 삭제 (논리적 삭제)
     int deleteComment(Map<String, Object> params);
     
-    // 특정 게시글의 댓글 목록 조회
-    List<Map<String, Object>> selectCommentList(Map<String, Object> params);
-    
     // 특정 댓글 조회
     Map<String, Object> selectComment(Map<String, Object> params);
     
@@ -28,4 +25,10 @@ public interface CommentMapper {
     
     // 여러 게시글의 댓글 수 일괄 조회
     List<Map<String, Object>> selectCommentCountByPostUids(List<Long> postUids);
+    
+    // 댓글 소프트 삭제
+    int updateCommentDeleteYn(Long commentUid);
+
+    // 댓글 목록 조회
+    List<Map<String, Object>> selectCommentList(Map<String, Object> params);
 }

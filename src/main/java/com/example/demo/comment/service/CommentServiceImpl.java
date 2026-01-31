@@ -19,9 +19,7 @@ public class CommentServiceImpl implements CommentService {
     @Autowired
     private CommentMapper commentMapper;
     
-    /**
-     * 댓글 등록
-     */
+   // 댓글 등록
     @Override
     @Transactional
     public Map<String, Object> insertComment(Map<String, Object> params) {
@@ -72,9 +70,7 @@ public class CommentServiceImpl implements CommentService {
         return result;
     }
     
-    /**
-     * 댓글 수정
-     */
+    // 댓글 수정
     @Override
     @Transactional
     public boolean updateComment(Map<String, Object> params) {
@@ -87,19 +83,13 @@ public class CommentServiceImpl implements CommentService {
         }
     }
     
-    /**
-     * 댓글 삭제
-     */
+    
+    // 댓글 삭제
     @Override
     @Transactional
-    public boolean deleteComment(Map<String, Object> params) {
-        try {
-            int result = commentMapper.deleteComment(params);
-            return result > 0;
-        } catch (Exception e) {
-            e.printStackTrace();
-            return false;
-        }
+    public boolean deleteComment(Long commentUid) {
+        int result = commentMapper.updateCommentDeleteYn(commentUid);
+        return result > 0;
     }
     
     /**
@@ -109,6 +99,7 @@ public class CommentServiceImpl implements CommentService {
     public List<Map<String, Object>> getCommentList(Map<String, Object> params) {
         return commentMapper.selectCommentList(params);
     }
+    
     
     /**
      * 댓글 상세 조회

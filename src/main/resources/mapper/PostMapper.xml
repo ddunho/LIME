@@ -11,10 +11,10 @@
 	        , P.TITLE        AS title       /* 제목 */
 	        , P.WRITE_DATE   AS writeDate   /* 작성일 */
 	        , U.USERNAME     AS username    /* 작성자 닉네임 */
+	        , P.DELETEYN     AS DELETEYN
 	    FROM post_tb P
 	    JOIN user_tb U
 	      ON P.USER_UID = U.USER_UID
-	    WHERE P.DELETEYN = 'N'
 	    ORDER BY P.POST_UID DESC
 	</select>
 
@@ -24,6 +24,7 @@
 	        , title
 	        , writeDate
 	        , username
+	        , DELETEYN
 	    FROM (
 	        SELECT
 	              P.POST_UID     AS postUid     /* 게시글 번호 */
@@ -32,11 +33,11 @@
 	            , U.USERNAME     AS username    /* 작성자 닉네임 */
 	            , ROW_NUMBER() OVER (
 	                  ORDER BY P.POST_UID DESC
-	              )               AS rn         /* 페이징용 순번 */
+	              )               AS rn        /* 페이징용 순번 */
+              	, P.DELETEYN     AS DELETEYN
 	        FROM post_tb P
 	        JOIN user_tb U
 	          ON P.USER_UID = U.USER_UID
-	        WHERE P.DELETEYN = 'N'
 	    )
 	    WHERE rn BETWEEN #{start} AND #{end}
 	</select>
@@ -128,16 +129,31 @@
 		<!-- 게시글 수정 -->
 	<update id="updatePost" parameterType="map">
 	    UPDATE post_tb
-	    SET TITLE = #{title},
-	        CONTENT = #{content},
-	        MODIFY_DATE = SYSDATE
-	    WHERE POST_UID = #{postUid}
+	    SET
+	          TITLE        = #{title}     /* 제목 */
+	        , CONTENT      = #{content}   /* 내용 */
+	        , MODIFY_DATE  = SYSDATE       /* 수정일 */
+	    WHERE POST_UID = #{postUid}        /* 게시글 번호 */
 	</update>
-
-	<!-- 게시글의 모든 파일 삭제 -->
+	
+	<!-- 게시글 소프트 삭제 -->
+	<update id="updatePostDeleteYn" parameterType="long">
+	    UPDATE post_tb
+	    SET deleteyn = 'Y'
+	    WHERE post_uid = #{postUid}
+	</update>
+	
+	<!-- 게시글 첨부파일 조회 -->
+	<select id="selectFilesByPostUid" parameterType="long" resultType="map">
+	    SELECT file_uid, filepath, storedname
+	    FROM post_file_tb
+	    WHERE post_uid = #{postUid}
+	</select>
+	
+	<!-- 게시글 첨부파일 DB 삭제 -->
 	<delete id="deleteFilesByPostUid" parameterType="long">
 	    DELETE FROM post_file_tb
-	    WHERE POST_UID = #{postUid}
+	    WHERE post_uid = #{postUid}
 	</delete>
 
 
