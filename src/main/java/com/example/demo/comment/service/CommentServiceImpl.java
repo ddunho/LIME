@@ -10,46 +10,40 @@ import org.springframework.transaction.annotation.Transactional;
 
 import com.example.demo.comment.mapper.CommentMapper;
 
-
-
-
 @Service
 public class CommentServiceImpl implements CommentService {
     
     @Autowired
     private CommentMapper commentMapper;
     
-   // 댓글 등록
+    /**
+     * 댓글 등록 (depth는 LEVEL로 자동 계산)
+     */
     @Override
     @Transactional
     public Map<String, Object> insertComment(Map<String, Object> params) {
         Map<String, Object> result = new HashMap<>();
         
         try {
-            // depth 계산
             Object parentCommentUid = params.get("parent_comment_uid");
-            int depth = 0;
             
+            // 답글인 경우 부모 댓글 존재 확인
             if (parentCommentUid != null && !parentCommentUid.toString().isEmpty()) {
-                // 부모 댓글 조회
                 Map<String, Object> parentParams = new HashMap<>();
                 parentParams.put("comment_uid", parentCommentUid);
                 Map<String, Object> parentComment = commentMapper.selectComment(parentParams);
                 
-                if (parentComment != null) {
-                    depth = Integer.parseInt(parentComment.get("DEPTH").toString()) + 1;
-                } else {
+                if (parentComment == null) {
                     result.put("success", false);
                     result.put("message", "존재하지 않는 댓글입니다.");
                     return result;
                 }
             } else {
+                // 원댓글인 경우
                 params.put("parent_comment_uid", null);
             }
             
-            params.put("depth", depth);
-            
-            // 댓글 등록
+            // 댓글 등록 (depth는 쿼리의 LEVEL로 자동 계산됨)
             int insertResult = commentMapper.insertComment(params);
             
             if (insertResult > 0) {
@@ -70,7 +64,9 @@ public class CommentServiceImpl implements CommentService {
         return result;
     }
     
-    // 댓글 수정
+    /**
+     * 댓글 수정
+     */
     @Override
     @Transactional
     public boolean updateComment(Map<String, Object> params) {
@@ -83,8 +79,9 @@ public class CommentServiceImpl implements CommentService {
         }
     }
     
-    
-    // 댓글 삭제
+    /**
+     * 댓글 삭제 (소프트 삭제)
+     */
     @Override
     @Transactional
     public boolean deleteComment(Long commentUid) {
@@ -99,7 +96,6 @@ public class CommentServiceImpl implements CommentService {
     public List<Map<String, Object>> getCommentList(Map<String, Object> params) {
         return commentMapper.selectCommentList(params);
     }
-    
     
     /**
      * 댓글 상세 조회

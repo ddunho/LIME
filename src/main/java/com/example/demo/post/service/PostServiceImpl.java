@@ -180,31 +180,69 @@ public class PostServiceImpl implements PostService {
         
         return result;
     }
+
+    /**
+     * 게시글 삭제
+     * 1. 댓글 소프트 삭제
+     * 2. 파일 물리적 삭제
+     * 3. 파일 DB 하드 삭제
+     * 4. 게시글 소프트 삭제
+     */
     @Transactional
     @Override
     public void deletePost(Long postUid) {
 
-        // 1. 첨부파일 조회
+        // 1. 게시글의 모든 댓글 소프트 삭제
+        try {
+            int commentDeleted = postMapper.updateCommentDeleteYnByPostUid(postUid);
+            System.out.println("댓글 소프트 삭제 완료: " + commentDeleted + "개");
+        } catch (Exception e) {
+            System.err.println("댓글 소프트 삭제 실패 (comment_tb에 deleteyn 컬럼이 없을 수 있음): " + e.getMessage());
+            // 댓글 삭제 실패해도 게시글 삭제는 진행
+        }
+
+        // 2. 첨부파일 조회
         List<Map<String, Object>> files = postMapper.selectFilesByPostUid(postUid);
 
-        // 2. 실제 파일 삭제
+        // 3. 실제 파일 물리적 삭제
         for (Map<String, Object> file : files) {
-            File f = new File(
-                file.get("FILEPATH").toString(),
-                file.get("STOREDNAME").toString()
-            );
-            if (f.exists()) {
-                f.delete();
+            // 대소문자 구분 없이 값 가져오기
+            String filepath = getMapValue(file, "FILEPATH", "filePath");
+            String storedname = getMapValue(file, "STOREDNAME", "storedName");
+            
+            if (filepath != null && storedname != null) {
+                File f = new File(filepath, storedname);
+                if (f.exists()) {
+                    boolean deleted = f.delete();
+                    System.out.println("파일 삭제: " + f.getAbsolutePath() + " - " + (deleted ? "성공" : "실패"));
+                } else {
+                    System.out.println("파일이 존재하지 않음: " + f.getAbsolutePath());
+                }
             }
         }
 
-        // 3. 파일 DB 삭제 (하드 삭제)
-        postMapper.deleteFilesByPostUid(postUid);
+        // 4. 파일 DB 하드 삭제
+        int fileDeleted = postMapper.deleteFilesByPostUid(postUid);
+        System.out.println("파일 DB 삭제 완료: " + fileDeleted + "개");
 
-        // 4. 게시글 소프트 삭제
-        postMapper.updatePostDeleteYn(postUid);
+        // 5. 게시글 소프트 삭제
+        int postDeleted = postMapper.updatePostDeleteYn(postUid);
+        if (postDeleted == 0) {
+            throw new RuntimeException("게시글 삭제에 실패했습니다. (이미 삭제되었거나 존재하지 않는 게시글)");
+        }
+        System.out.println("게시글 소프트 삭제 완료: postUid=" + postUid);
     }
-    
+
+    /**
+     * Map에서 대소문자 구분 없이 값 가져오기
+     */
+    private String getMapValue(Map<String, Object> map, String upperKey, String lowerKey) {
+        Object value = map.get(upperKey);
+        if (value == null) {
+            value = map.get(lowerKey);
+        }
+        return value != null ? value.toString() : null;
+    }
 
     /**
      * 파일 저장 (기존 write 로직 재사용)

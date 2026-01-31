@@ -177,24 +177,60 @@ public class PostController {
         return result;
     }
     
+    /**
+     * 게시글 삭제 (인증 추가)
+     */
     @PostMapping("/post/delete")
     @ResponseBody
-    public Map<String, Object> deletePost(@RequestParam Long postUid) {
+    public Map<String, Object> deletePost(
+            @RequestParam Long postUid,
+            HttpSession session) {
 
         Map<String, Object> result = new HashMap<>();
 
         try {
+            // 1. 로그인 체크
+            User loginUser = (User) session.getAttribute("LOGIN_USER");
+            if (loginUser == null) {
+                result.put("success", false);
+                result.put("message", "로그인이 필요합니다.");
+                return result;
+            }
+
+            // 2. 게시글 조회
+            Map<String, Object> post = postService.findById(postUid);
+            if (post == null) {
+                result.put("success", false);
+                result.put("message", "존재하지 않는 게시글입니다.");
+                return result;
+            }
+
+            // 3. 작성자 본인 확인
+            String postUsername = (String) post.get("USERNAME");
+            if (postUsername == null) {
+                postUsername = (String) post.get("username");
+            }
+            
+            if (!loginUser.getUsername().equals(postUsername)) {
+                result.put("success", false);
+                result.put("message", "본인이 작성한 게시글만 삭제할 수 있습니다.");
+                return result;
+            }
+
+            // 4. 삭제 처리
             postService.deletePost(postUid);
             result.put("success", true);
+            result.put("message", "게시글이 삭제되었습니다.");
+
         } catch (Exception e) {
+            e.printStackTrace();
             result.put("success", false);
-            result.put("message", "게시글 삭제 실패");
+            result.put("message", "게시글 삭제 실패: " + e.getMessage());
         }
 
         return result;
     }
 
-    
     @GetMapping("/detail")
     public String detail(
             @RequestParam Long postUid,
@@ -264,19 +300,51 @@ public class PostController {
         }
     }
     
+    /**
+     * 게시글 수정 페이지 (인증 추가)
+     */
     @GetMapping("/modify")
-    public String modifyPage(@RequestParam("postUid") Long postUid, Model model) {
+    public String modifyPage(
+            @RequestParam("postUid") Long postUid, 
+            Model model,
+            HttpSession session) {
         
+        // 1. 로그인 체크
+        User loginUser = (User) session.getAttribute("LOGIN_USER");
+        if (loginUser == null) {
+            model.addAttribute("errorMessage", "로그인이 필요합니다.");
+            return "redirect:/login";
+        }
+
+        // 2. 게시글 조회
         Map<String, Object> data = postService.getPostForModify(postUid);
+        Map<String, Object> post = (Map<String, Object>) data.get("post");
         
-        model.addAttribute("post", data.get("post"));
+        if (post == null) {
+            model.addAttribute("errorMessage", "존재하지 않는 게시글입니다.");
+            return "redirect:/";
+        }
+
+        // 3. 작성자 본인 확인
+        String postUsername = (String) post.get("USERNAME");
+        if (postUsername == null) {
+            postUsername = (String) post.get("username");
+        }
+        
+        if (!loginUser.getUsername().equals(postUsername)) {
+            model.addAttribute("errorMessage", "본인이 작성한 게시글만 수정할 수 있습니다.");
+            return "redirect:/detail?postUid=" + postUid;
+        }
+        
+        // 4. 수정 페이지로 이동
+        model.addAttribute("post", post);
         model.addAttribute("fileList", data.get("fileList"));
         
         return "modify"; // modify.jsp
     }
 
     /**
-     * 게시글 수정 처리
+     * 게시글 수정 처리 (인증 추가)
      */
     @PostMapping("/modify")
     @ResponseBody
@@ -284,35 +352,73 @@ public class PostController {
             @RequestParam("postUid") Long postUid,
             @RequestParam("title") String title,
             @RequestParam("content") String content,
-            @RequestParam(value = "uploadFile", required = false) MultipartFile[] uploadFile) {
+            @RequestParam(value = "uploadFile", required = false) MultipartFile[] uploadFile,
+            HttpSession session) {
         
         System.out.println("게시글 수정 요청 - postUid: " + postUid + ", title: " + title);
         
         Map<String, Object> result = new HashMap<>();
         
-        // 파일 개수 제한 검증
-        if (uploadFile != null && uploadFile.length > MAX_FILE_COUNT) {
-            result.put("success", false);
-            result.put("message", "파일은 최대 " + MAX_FILE_COUNT + "개까지만 첨부할 수 있습니다.");
-            return result;
-        }
-        
-        // 빈 파일 필터링 및 재검증
-        if (uploadFile != null) {
-            long validFileCount = Arrays.stream(uploadFile)
-                .filter(file -> file != null && 
-                        !file.isEmpty() && 
-                        file.getOriginalFilename() != null && 
-                        !file.getOriginalFilename().trim().isEmpty())
-                .count();
+        try {
+            // 1. 로그인 체크
+            User loginUser = (User) session.getAttribute("LOGIN_USER");
+            if (loginUser == null) {
+                result.put("success", false);
+                result.put("message", "로그인이 필요합니다.");
+                return result;
+            }
+
+            // 2. 게시글 조회
+            Map<String, Object> post = postService.findById(postUid);
+            if (post == null) {
+                result.put("success", false);
+                result.put("message", "존재하지 않는 게시글입니다.");
+                return result;
+            }
+
+            // 3. 작성자 본인 확인
+            String postUsername = (String) post.get("USERNAME");
+            if (postUsername == null) {
+                postUsername = (String) post.get("username");
+            }
             
-            if (validFileCount > MAX_FILE_COUNT) {
+            if (!loginUser.getUsername().equals(postUsername)) {
+                result.put("success", false);
+                result.put("message", "본인이 작성한 게시글만 수정할 수 있습니다.");
+                return result;
+            }
+
+            // 4. 파일 개수 제한 검증
+            if (uploadFile != null && uploadFile.length > MAX_FILE_COUNT) {
                 result.put("success", false);
                 result.put("message", "파일은 최대 " + MAX_FILE_COUNT + "개까지만 첨부할 수 있습니다.");
                 return result;
             }
+            
+            // 5. 빈 파일 필터링 및 재검증
+            if (uploadFile != null) {
+                long validFileCount = Arrays.stream(uploadFile)
+                    .filter(file -> file != null && 
+                            !file.isEmpty() && 
+                            file.getOriginalFilename() != null && 
+                            !file.getOriginalFilename().trim().isEmpty())
+                    .count();
+                
+                if (validFileCount > MAX_FILE_COUNT) {
+                    result.put("success", false);
+                    result.put("message", "파일은 최대 " + MAX_FILE_COUNT + "개까지만 첨부할 수 있습니다.");
+                    return result;
+                }
+            }
+            
+            // 6. 수정 처리
+            return postService.modifyPost(postUid, title, content, uploadFile);
+            
+        } catch (Exception e) {
+            e.printStackTrace();
+            result.put("success", false);
+            result.put("message", "게시글 수정 중 오류가 발생했습니다: " + e.getMessage());
+            return result;
         }
-        
-        return postService.modifyPost(postUid, title, content, uploadFile);
     }
 }

@@ -99,6 +99,7 @@
 	        , P.CONTENT      AS content     /* 내용 */
 	        , P.WRITE_DATE   AS writeDate   /* 작성일 */
 	        , U.USERNAME     AS username    /* 작성자 */
+	        , P.USER_UID     AS userUid     /* 작성자 UID */
 	    FROM post_tb P
 	    JOIN user_tb U
 	      ON P.USER_UID = U.USER_UID
@@ -126,7 +127,7 @@
 	    WHERE file_uid = #{fileUid}
 	</select>
 	
-		<!-- 게시글 수정 -->
+	<!-- 게시글 수정 -->
 	<update id="updatePost" parameterType="map">
 	    UPDATE post_tb
 	    SET
@@ -143,9 +144,19 @@
 	    WHERE post_uid = #{postUid}
 	</update>
 	
+	<!-- 게시글의 모든 댓글 소프트 삭제 -->
+	<update id="updateCommentDeleteYnByPostUid" parameterType="long">
+	    UPDATE comment_tb
+	    SET deleteyn = 'Y'
+	    WHERE post_uid = #{postUid}
+	</update>
+	
 	<!-- 게시글 첨부파일 조회 -->
 	<select id="selectFilesByPostUid" parameterType="long" resultType="map">
-	    SELECT file_uid, filepath, storedname
+	    SELECT 
+	          FILE_UID      AS fileUid
+	        , FILE_PATH     AS filePath
+	        , STORED_NAME   AS storedName
 	    FROM post_file_tb
 	    WHERE post_uid = #{postUid}
 	</select>
@@ -155,6 +166,5 @@
 	    DELETE FROM post_file_tb
 	    WHERE post_uid = #{postUid}
 	</delete>
-
 
 </mapper>
