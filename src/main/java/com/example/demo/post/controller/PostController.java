@@ -41,7 +41,9 @@ public class PostController {
     public PostController(PostService postService) {
         this.postService = postService;
     }
-
+    
+    
+    // 페이징 처리 된 게시글 조회
     @GetMapping("/")
     public String list(
             @RequestParam(defaultValue = "1") int page,

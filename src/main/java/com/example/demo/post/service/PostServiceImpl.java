@@ -23,7 +23,8 @@ public class PostServiceImpl implements PostService {
     public PostServiceImpl(PostMapper postMapper) {
         this.postMapper = postMapper;
     }
-
+    
+    //페이징 처리
     @Override
     public List<Map<String, Object>> findPage(int page) {
         int start = (page - 1) * PAGE_SIZE + 1;

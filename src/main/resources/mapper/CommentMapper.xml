@@ -5,7 +5,7 @@
 
 <mapper namespace="com.example.demo.comment.mapper.CommentMapper">
     
-    <!-- 댓글 등록 (depth 컬럼 완전 제거) -->
+    <!-- 댓글 등록 -->
     <insert id="insertComment" parameterType="map">
         <selectKey keyProperty="comment_uid" resultType="long" order="BEFORE">
             SELECT comment_seq.NEXTVAL FROM DUAL

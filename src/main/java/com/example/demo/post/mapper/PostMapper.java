@@ -7,7 +7,9 @@ import java.util.Map;
 
 @Mapper
 public interface PostMapper {
-    List<Map<String, Object>> findPage(
+	
+	// 페이징으로 게시글 조회
+    List<Map<String, Object>> findPage( // List : 여러 행 Map<String, Object> : 한 행
         @Param("start") int offset,
         @Param("end") int limit
     );

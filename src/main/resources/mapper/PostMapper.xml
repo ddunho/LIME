@@ -5,19 +5,7 @@
 
 <mapper namespace="com.example.demo.post.mapper.PostMapper">
 
-	<select id="findAll" resultType="map">
-	    SELECT
-	          P.POST_UID     AS postUid     /* 게시글 번호 */
-	        , P.TITLE        AS title       /* 제목 */
-	        , P.WRITE_DATE   AS writeDate   /* 작성일 */
-	        , U.USERNAME     AS username    /* 작성자 닉네임 */
-	        , P.DELETEYN     AS DELETEYN
-	    FROM post_tb P
-	    JOIN user_tb U
-	      ON P.USER_UID = U.USER_UID
-	    ORDER BY P.POST_UID DESC
-	</select>
-
+	<!-- 페이징으로 게시글 조회 -->
 	<select id="findPage" resultType="map">
 	    SELECT
 	          postUid
@@ -31,8 +19,8 @@
 	            , P.TITLE        AS title       /* 제목 */
 	            , P.WRITE_DATE   AS writeDate   /* 작성일 */
 	            , U.USERNAME     AS username    /* 작성자 닉네임 */
-	            , ROW_NUMBER() OVER (
-	                  ORDER BY P.POST_UID DESC
+	            , ROW_NUMBER() OVER (			/* ROW_NUMBER() : 윈도우 함수. 조회된 각 행에 대해 중복 없이 1,2,3,4...순번 부여 */
+	                  ORDER BY P.POST_UID DESC	/* OVER : 이 함수가 어떤 범위와 규칙을 기준으로 계산될지 정의하는 절 */
 	              )               AS rn        /* 페이징용 순번 */
               	, P.DELETEYN     AS DELETEYN
 	        FROM post_tb P

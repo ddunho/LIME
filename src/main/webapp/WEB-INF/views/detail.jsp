@@ -287,7 +287,7 @@
                                                 
                                                 <textarea id="commentContent" placeholder="댓글을 입력하세요"></textarea>
                                                 
-                                                <!-- 🔥 Hidden fields -->
+                                                <!--  Hidden fields -->
                                                 <input type="hidden" id="parentCommentUid" value="" />
                                                 <input type="hidden" id="editCommentUid" value="" />
                                                 
@@ -523,7 +523,7 @@
         });
     }
 
-    // 🔥 댓글 수정 - DOM 직접 업데이트 (조회 API 없이)
+    // 댓글 수정 - DOM 직접 업데이트 (조회 API 없이)
     function updateComment(commentUid, content) {
         $.ajax({
             url: '/comment/update',
@@ -534,7 +534,7 @@
             },
             success: function(response) {
                 if (response.success) {
-                    // 🔥 해당 댓글의 내용만 DOM에서 직접 업데이트
+                    // 해당 댓글의 내용만 DOM에서 직접 업데이트
                     var $commentItem = $('.comment-item[data-comment-uid="' + commentUid + '"]');
                     $commentItem.find('.comment-content-text').text(content);
                     
@@ -622,7 +622,7 @@
         $('#commentWriteBox').removeClass('edit-mode');
     }
 
-    // 🔥 댓글 삭제 - DOM 직접 업데이트 (조회 API 없이)
+    //  댓글 삭제 - DOM 직접 업데이트 (조회 API 없이)
     function deleteComment(commentUid) {
         if (!confirm('댓글을 삭제하시겠습니까?')) {
             return;
