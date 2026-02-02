@@ -187,14 +187,15 @@
     $("#confirmLogoutBtn").on("click", function (e) {
       e.preventDefault();
 
-      $.ajax({
-        url: "/user/logout",
-        type: "GET",
-        success: function () {
-          alert("로그아웃 성공");
-          location.href = "/";
-        }
-      });
+	  requestAjax({
+	    url: "/user/logout",
+
+	    success: function () {
+	      alert("로그아웃 성공");
+	      location.href = "/";
+	    }
+	  });
+
     });
 
   });

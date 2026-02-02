@@ -153,10 +153,11 @@
       $('#fileInput').on('change', function () {
           const files = this.files;
           const $fileList = $('#fileList');
-
+			
+		  console.log(MAX_FILE_COUNT);
           // 파일 개수 체크
           if (files.length > MAX_FILE_COUNT) {
-              alert(`파일은 최대 ${MAX_FILE_COUNT}개까지만 선택할 수 있습니다.`);
+			alert("파일은 최대 " + MAX_FILE_COUNT + "개까지만 선택할 수 있습니다.");
               this.value = '';
               $fileList.empty();
               return;
@@ -176,20 +177,20 @@
       $("#confirmLogoutBtn").on("click", function (e) {
           e.preventDefault();
 
-          $.ajax({
-              url: "/user/logout",
-              type: "GET",
-              success: function () {
-                  alert("로그아웃 성공");
-                  location.href = "/";
-              }
-          });
+		  requestAjax({
+		      url: "/user/logout",
+
+		      success: function () {
+		          alert("로그아웃 성공");
+		          location.href = "/";
+		      }
+		  });
+
       });
 
       // 게시글 작성
       $("#writeBtn").on("click", function () {
-		const MAX_FILE_COUNT = 5;	
-          
+			
           // 제목과 내용 검증
           const title = $("input[name='title']").val().trim();
           const content = $("textarea[name='content']").val().trim();
@@ -222,27 +223,30 @@
           const form = document.getElementById("writeForm");
           const formData = new FormData(form);
 
-          $.ajax({
-              url: "/write",
-              type: "POST",
-              data: formData,
-              processData: false,
-              contentType: false,
-              success: function (response) {
-                  if (response.success) {
-                      alert(response.message);
-                      location.href = "/";
-                  } else {
-                      alert(response.message);
-                      if (response.redirectUrl) {
-                          location.href = response.redirectUrl;
-                      }
-                  }
-              },
-              error: function () {
-                  alert("서버 오류가 발생했습니다.");
-              }
-          });
+		  requestAjax({
+		    url: "/write",
+		    method: "POST",
+		    data: formData,
+		    processData: false,
+		    contentType: false,
+
+		    success: function (response) {
+		        if (response.success) {
+		            alert(response.message);
+		            location.href = "/";
+		        } else {
+		            alert(response.message);
+		            if (response.redirectUrl) {
+		                location.href = response.redirectUrl;
+		            }
+		        }
+		    },
+
+		    error: function () {
+		        alert("서버 오류가 발생했습니다.");
+		    }
+		  });
+
       });
 
   });

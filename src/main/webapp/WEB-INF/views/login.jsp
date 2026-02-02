@@ -118,11 +118,11 @@
 	            localStorage.removeItem("REMEMBER_EMAIL");
 	        }
 
-			$.ajax({
+			requestAjax({
 			    url: "/user/login",
-			    type: "POST",
-			    contentType: "application/json",
-			    data: JSON.stringify({ email, password }),
+			    method: "POST",
+			    data: { email, password },
+
 			    success: function (result) {
 			        if (result === true) {
 			            alert("로그인 성공!");
@@ -132,6 +132,7 @@
 			        }
 			    }
 			});
+
 
 	    });
 	});

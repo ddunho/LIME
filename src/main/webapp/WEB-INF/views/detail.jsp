@@ -277,17 +277,18 @@
             return;
         }
         
-        $.ajax({
-            url: '/comment/list',
-            type: 'GET',
-            data: { post_uid: postUid },
-            success: function(response) {
-                if (response.success) {
-                    displayCommentList(response.data);
-                    $('#commentCount').text(response.data.length);
-                }
-            }
-        });
+		requestAjax({
+		    url: '/comment/list',
+		    data: { post_uid: postUid },
+
+		    success: function(response) {
+		        if (response.success) {
+		            displayCommentList(response.data);
+		            $('#commentCount').text(response.data.length);
+		        }
+		    }
+		});
+
     }
 
     // 댓글 목록 표시
@@ -305,7 +306,7 @@
         $('#commentList').html(html);
     }
 
-    // 🔥 댓글 HTML 생성 함수 (재사용)
+    //  댓글 HTML 생성 함수 (재사용)
     function generateCommentHtml(comment) {
         var depth = parseInt(comment.DEPTH) || 0;
         var isMyComment = '${LOGIN_USER.userUid}' == comment.USER_UID;
@@ -399,66 +400,72 @@
             data.parent_comment_uid = parentUid;
         }
         
-        $.ajax({
-            url: '/comment/insert',
-            type: 'POST',
-            data: data,
-            success: function(response) {
-                if (response.success) {
-                    cancelAction();
-                    // 🔥 전체 댓글 목록 다시 조회 (등록은 계층 구조 때문에 전체 조회 필요)
-                    loadCommentList();
-                } else {
-                    alert(response.message);
-                }
-            },
-            error: function() {
-                alert('댓글 등록 중 오류가 발생했습니다.');
-            }
-        });
+		requestAjax({
+		    url: '/comment/insert',
+		    method: 'POST',
+		    data: data,
+
+		    success: function(response) {
+		        if (response.success) {
+		            cancelAction();
+		            // 전체 댓글 목록 다시 조회 (등록은 계층 구조 때문에 전체 조회 필요)
+		            loadCommentList();
+		        } else {
+		            alert(response.message);
+		        }
+		    },
+
+		    error: function() {
+		        alert('댓글 등록 중 오류가 발생했습니다.');
+		    }
+		});
+
     }
 
     // 댓글 수정 - DOM 직접 업데이트 (조회 API 없이)
     function updateComment(commentUid, content) {
-        $.ajax({
-            url: '/comment/update',
-            type: 'POST',
-            data: {
-                comment_uid: commentUid,
-                content: content
-            },
-            success: function(response) {
-                if (response.success) {
-                    // 해당 댓글의 내용만 DOM에서 직접 업데이트
-                    var $commentItem = $('.comment-item[data-comment-uid="' + commentUid + '"]');
-                    $commentItem.find('.comment-content-text').text(content);
-                    
-                    // 수정 시간 업데이트 (현재 시간으로)
-                    var now = new Date();
-                    var timeStr = now.getFullYear() + '-' + 
-                        String(now.getMonth() + 1).padStart(2, '0') + '-' + 
-                        String(now.getDate()).padStart(2, '0') + ' ' +
-                        String(now.getHours()).padStart(2, '0') + ':' + 
-                        String(now.getMinutes()).padStart(2, '0') + ':' + 
-                        String(now.getSeconds()).padStart(2, '0');
-                    
-                    $commentItem.find('small').text(timeStr);
-                    
-                    // 수정 완료 피드백
-                    $commentItem.addClass('bg-light');
-                    setTimeout(function() {
-                        $commentItem.removeClass('bg-light');
-                    }, 1000);
-                    
-                    cancelAction();
-                } else {
-                    alert(response.message);
-                }
-            },
-            error: function() {
-                alert('댓글 수정 중 오류가 발생했습니다.');
-            }
-        });
+		requestAjax({
+		    url: '/comment/update',
+		    method: 'POST',
+		    data: {
+		        comment_uid: commentUid,
+		        content: content
+		    },
+
+		    success: function(response) {
+		        if (response.success) {
+		            // 해당 댓글의 내용만 DOM에서 직접 업데이트
+		            var $commentItem = $('.comment-item[data-comment-uid="' + commentUid + '"]');
+		            $commentItem.find('.comment-content-text').text(content);
+		            
+		            // 수정 시간 업데이트 (현재 시간으로)
+		            var now = new Date();
+		            var timeStr = now.getFullYear() + '-' + 
+		                String(now.getMonth() + 1).padStart(2, '0') + '-' + 
+		                String(now.getDate()).padStart(2, '0') + ' ' +
+		                String(now.getHours()).padStart(2, '0') + ':' + 
+		                String(now.getMinutes()).padStart(2, '0') + ':' + 
+		                String(now.getSeconds()).padStart(2, '0');
+		            
+		            $commentItem.find('small').text(timeStr);
+		            
+		            // 수정 완료 피드백
+		            $commentItem.addClass('bg-light');
+		            setTimeout(function() {
+		                $commentItem.removeClass('bg-light');
+		            }, 1000);
+		            
+		            cancelAction();
+		        } else {
+		            alert(response.message);
+		        }
+		    },
+
+		    error: function() {
+		        alert('댓글 수정 중 오류가 발생했습니다.');
+		    }
+		});
+
     }
 
     // 수정 모드 활성화
@@ -523,37 +530,40 @@
             return;
         }
         
-        $.ajax({
-            url: '/comment/delete',
-            type: 'POST',
-            data: { commentUid: commentUid },
-            success: function(response) {
-                if (response.success) {
-                    // 🔥 해당 댓글을 "삭제된 댓글입니다"로 DOM에서 직접 변경
-                    var $commentItem = $('.comment-item[data-comment-uid="' + commentUid + '"]');
-                    
-                    $commentItem.html(
-                        '<div style="color:#999; font-style:italic; padding: 10px 0;">' +
-                        '  <i class="fas fa-ban mr-2"></i>삭제된 댓글입니다.' +
-                        '</div>'
-                    );
-                    
-                    // 삭제 애니메이션
-                    $commentItem.fadeOut(200).fadeIn(200);
-                    
-                    // 댓글 개수 갱신
-                    updateCommentCount();
-                } else {
-                    alert(response.message);
-                }
-            },
-            error: function() {
-                alert('댓글 삭제 중 오류가 발생했습니다.');
-            }
-        });
+		requestAjax({
+		    url: '/comment/delete',
+		    method: 'POST',
+		    data: { commentUid: commentUid },
+
+		    success: function(response) {
+		        if (response.success) {
+		            // 해당 댓글을 "삭제된 댓글입니다"로 DOM에서 직접 변경
+		            var $commentItem = $('.comment-item[data-comment-uid="' + commentUid + '"]');
+		            
+		            $commentItem.html(
+		                '<div style="color:#999; font-style:italic; padding: 10px 0;">' +
+		                '  <i class="fas fa-ban mr-2"></i>삭제된 댓글입니다.' +
+		                '</div>'
+		            );
+		            
+		            // 삭제 애니메이션
+		            $commentItem.fadeOut(200).fadeIn(200);
+		            
+		            // 댓글 개수 갱신
+		            updateCommentCount();
+		        } else {
+		            alert(response.message);
+		        }
+		    },
+
+		    error: function() {
+		        alert('댓글 삭제 중 오류가 발생했습니다.');
+		    }
+		});
+
     }
 
-    // 🔥 댓글 개수 갱신 (삭제된 댓글 제외)
+    // 댓글 개수 갱신 (삭제된 댓글 제외)
     function updateCommentCount() {
         var activeComments = $('.comment-item').filter(function() {
             return $(this).find('.comment-content-text').length > 0; // 삭제되지 않은 댓글만
@@ -568,31 +578,34 @@
             return;
         }
 
-        $.ajax({
-            url: '/post/delete',
-            type: 'POST',
-            data: {
-                postUid: '${post.POSTUID}'
-            },
-            success: function (response) {
-                if (response.success) {
-                    alert(response.message || '게시글이 삭제되었습니다.');
-                    location.href = '/';
-                } else {
-                    alert(response.message || '게시글 삭제에 실패했습니다.');
-                }
-            },
-            error: function (xhr, status, error) {
-                console.error('삭제 오류:', error);
-                console.error('Response:', xhr.responseText);
-                
-                var errorMessage = '게시글 삭제 중 오류가 발생했습니다.';
-                if (xhr.responseJSON && xhr.responseJSON.message) {
-                    errorMessage += '\n\n상세: ' + xhr.responseJSON.message;
-                }
-                alert(errorMessage);
-            }
-        });
+		requestAjax({
+		    url: '/post/delete',
+		    method: 'POST',
+		    data: {
+		        postUid: '${post.POSTUID}'
+		    },
+
+		    success: function (response) {
+		        if (response.success) {
+		            alert(response.message || '게시글이 삭제되었습니다.');
+		            location.href = '/';
+		        } else {
+		            alert(response.message || '게시글 삭제에 실패했습니다.');
+		        }
+		    },
+
+		    error: function (xhr) {
+		        console.error('삭제 오류:', xhr);
+		        console.error('Response:', xhr.responseText);
+		        
+		        var errorMessage = '게시글 삭제 중 오류가 발생했습니다.';
+		        if (xhr.responseJSON && xhr.responseJSON.message) {
+		            errorMessage += '\n\n상세: ' + xhr.responseJSON.message;
+		        }
+		        alert(errorMessage);
+		    }
+		});
+
     });
     </script>
 

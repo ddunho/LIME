@@ -25,6 +25,7 @@ import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.multipart.MultipartFile;
 
 @Controller
@@ -302,7 +303,7 @@ public class PostController {
     @PostMapping("/post/delete")
     @ResponseBody
     public Map<String, Object> deletePost(
-            @RequestParam Long postUid,
+            @RequestBody Map<String, Object> params,
             HttpSession session) {
 
         Map<String, Object> result = new HashMap<>();
@@ -315,6 +316,9 @@ public class PostController {
                 result.put("message", "로그인이 필요합니다.");
                 return result;
             }
+
+            // postUid 추출
+            Long postUid = Long.parseLong(params.get("postUid").toString());
 
             // 2. 게시글 조회
             Map<String, Object> post = postService.findById(postUid);

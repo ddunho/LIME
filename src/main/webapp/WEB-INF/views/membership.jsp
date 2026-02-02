@@ -198,31 +198,33 @@ $(document).ready(function() {
 	    }
 	    
 	    //중복 확인
-	    $.ajax({
-	        type: 'POST',
-	        url: '/user/check-userName',
-	        contentType: 'application/json',
-	        data: JSON.stringify({ userName: username }),
-	        success: function (isDuplicate) {
-	            if (!isDuplicate) {
-	                $('#usernameMsg')
-	                    .text('사용 가능한 닉네임입니다.')
-	                    .css('color', 'green');
-	                isUsernameValid = true;
-	            } else {
-	                $('#usernameMsg')
-	                    .text('이미 존재하는 닉네임입니다.')
-	                    .css('color', 'red');
-	                isUsernameValid = false;
-	            }
-	        },
-	        error: function () {
-	            $('#usernameMsg')
-	                .text('중복 확인 중 오류가 발생했습니다.')
-	                .css('color', 'red');
-	            isUsernameValid = false;
-	        }
-	    });
+		requestAjax({
+		    url: '/user/check-userName',
+		    method: 'POST',
+		    data: { userName: username },
+
+		    success: function (isDuplicate) {
+		        if (!isDuplicate) {
+		            $('#usernameMsg')
+		                .text('사용 가능한 닉네임입니다.')
+		                .css('color', 'green');
+		            isUsernameValid = true;
+		        } else {
+		            $('#usernameMsg')
+		                .text('이미 존재하는 닉네임입니다.')
+		                .css('color', 'red');
+		            isUsernameValid = false;
+		        }
+		    },
+
+		    error: function () {
+		        $('#usernameMsg')
+		            .text('중복 확인 중 오류가 발생했습니다.')
+		            .css('color', 'red');
+		        isUsernameValid = false;
+		    }
+		});
+
     });
 
     /*--------------------------------------------email--------------------------------------------*/
@@ -409,19 +411,21 @@ $(document).ready(function() {
 
         if (!confirm("회원가입을 하시겠습니까?")) return;
 
-        $.ajax({
-            type: 'POST',
-            url: '/user/signup',
-            contentType: 'application/json',
-            data: JSON.stringify(data),
-            success: function () {
-                alert("회원가입이 완료되었습니다.");
-                location.href = "/login";
-            },
-            error: function () {
-                alert("회원가입 중 오류가 발생했습니다.");
-            }
-        });
+		requestAjax({
+		    url: '/user/signup',
+		    method: 'POST',
+		    data: data,
+
+		    success: function () {
+		        alert("회원가입이 완료되었습니다.");
+		        location.href = "/login";
+		    },
+
+		    error: function () {
+		        alert("회원가입 중 오류가 발생했습니다.");
+		    }
+		});
+
     }
 
 }); //document.ready 끝

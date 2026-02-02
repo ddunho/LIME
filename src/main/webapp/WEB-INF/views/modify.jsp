@@ -162,19 +162,15 @@
 
   <script>
 	$(function () {
-	    console.log('페이지 로드 완료');
 	    
 	    // 파일 개수 제한 상수
 	    const MAX_FILE_COUNT = 5;
 	    
 	    // 파일 선택 시 미리보기 및 개수 체크
 	    $('#fileInput').on('change', function () {
-	        console.log('파일 선택 이벤트 발생');
 	        
 	        const files = this.files;
 	        const $fileList = $('#fileList');
-	        
-	        console.log('선택된 파일 개수:', files.length);
 	        
 	        // 파일 개수 체크
 	        if (files.length > MAX_FILE_COUNT) {
@@ -190,7 +186,6 @@
 	            alert("기존 파일은 삭제되고 선택한 파일로 덮어씌워집니다.");
 	            
 	            $.each(files, function (index, file) {
-	                console.log('파일명:', file.name);
 	                const li = $('<li class="list-group-item"></li>').text(file.name);
 	                $fileList.append(li);
 	            });
@@ -201,14 +196,15 @@
       $("#confirmLogoutBtn").on("click", function (e) {
           e.preventDefault();
 
-          $.ajax({
-              url: "/user/logout",
-              type: "GET",
-              success: function () {
-                  alert("로그아웃 성공");
-                  location.href = "/";
-              }
-          });
+		  requestAjax({
+		      url: "/user/logout",
+
+		      success: function () {
+		          alert("로그아웃 성공");
+		          location.href = "/";
+		      }
+		  });
+
       });
 
       // 수정 완료 버튼
@@ -235,33 +231,36 @@
 
           const formData = new FormData($("#modifyForm")[0]);
 
-          $.ajax({
-              url: "/modify",
-              type: "POST",
-              data: formData,
-              processData: false,
-              contentType: false,
-              success: function (response) {
-                  if (typeof response === 'object') {
-                      if (response.success) {
-                          alert(response.message || "수정 완료");
-                          location.href = "/";
-                      } else {
-                          alert(response.message || "수정 실패");
-                          if (response.redirectUrl) {
-                              location.href = response.redirectUrl;
-                          }
-                      }
-                  } else {
-                      alert("수정 완료");
-                      location.href = "/";
-                  }
-              },
-              error: function (xhr, status, error) {
-                  console.error("Error:", error);
-                  alert("서버 오류가 발생했습니다.");
-              }
-          });
+		  requestAjax({
+		    url: "/modify",
+		    method: "POST",
+		    data: formData,
+		    processData: false,
+		    contentType: false,
+
+		    success: function (response) {
+		        if (typeof response === 'object') {
+		            if (response.success) {
+		                alert(response.message || "수정 완료");
+		                location.href = "/";
+		            } else {
+		                alert(response.message || "수정 실패");
+		                if (response.redirectUrl) {
+		                    location.href = response.redirectUrl;
+		                }
+		            }
+		        } else {
+		            alert("수정 완료");
+		            location.href = "/";
+		        }
+		    },
+
+		    error: function (xhr) {
+		        console.error("Error:", xhr);
+		        alert("서버 오류가 발생했습니다.");
+		    }
+		  });
+
       });
   });
   </script>
