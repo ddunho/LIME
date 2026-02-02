@@ -14,16 +14,25 @@ public interface PostMapper {
         @Param("end") int limit
     );
     
+    // 총 페이지 수 조회
     int countAll();
     
+    // 게시글 저장
     void insertPost(Map<String, Object> param);
+    
+    // 파일 저장
     void insertPostFile(Map<String, Object> param);
     
+    // 아이디로 게시글 정보 조회
     Map<String, Object> findById(Long postUid);
+    
+    // 게시글 ID로 파일 정보 조회
     List<Map<String, Object>> findFilesByPostUid(Long postUid);
     
+    // 파일 ID로 파일 정보 조회
     Map<String, Object> findFileByUid(Long fileUid);
     
+    // 게시글 수정
     void updatePost(Map<String, Object> param);
     
     // 게시글 소프트 삭제

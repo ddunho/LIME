@@ -24,14 +24,14 @@ public class PostServiceImpl implements PostService {
         this.postMapper = postMapper;
     }
     
-    //페이징 처리
+    // 페이징 처리
     @Override
     public List<Map<String, Object>> findPage(int page) {
         int start = (page - 1) * PAGE_SIZE + 1;
         int end   = page * PAGE_SIZE;
         return postMapper.findPage(start, end);
     }
-
+    
     @Override
     public int getTotalPages() {
         int totalCount = postMapper.countAll();
@@ -45,12 +45,13 @@ public class PostServiceImpl implements PostService {
                       List<MultipartFile> uploadFiles,
                       Long userUid) throws Exception {
 
-        /* 1. 게시글 저장 */
+        // 게시글 저장
         Map<String, Object> postParam = new HashMap<>();
         postParam.put("title", title);
         postParam.put("content", content);
         postParam.put("userUid", userUid);
-
+        
+        // 파일 저장
         postMapper.insertPost(postParam);
 
         Object postUidObj = postParam.get("postUid");
@@ -60,7 +61,7 @@ public class PostServiceImpl implements PostService {
 
         Long postUid = ((Number) postUidObj).longValue();
 
-        /* 2. 파일 저장 (여러 개) */
+        // 파일 저장 (여러 개)
         if (uploadFiles != null && !uploadFiles.isEmpty()) {
             for (MultipartFile uploadFile : uploadFiles) {
 
@@ -97,21 +98,26 @@ public class PostServiceImpl implements PostService {
         return postUid;
     }
     
+    
+    // ID로 유저 정보 조회
     @Override
     public Map<String, Object> findById(Long postUid) {
         return postMapper.findById(postUid);
     }
-
+    
+    // 게시글 ID로 파일 정보 조회
     @Override
     public List<Map<String, Object>> findFilesByPostUid(Long postUid) {
         return postMapper.findFilesByPostUid(postUid);
     }
     
+    // 파일 ID로 파일 정보 조회
     @Override
     public Map<String, Object> findFileByUid(Long fileUid) {
         return postMapper.findFileByUid(fileUid);
     }
     
+    // 수정을 위한 게시글 정보 찾기
     @Override
     public Map<String, Object> getPostForModify(Long postUid) {
         Map<String, Object> result = new HashMap<>();
@@ -128,27 +134,25 @@ public class PostServiceImpl implements PostService {
         return result;
     }
 
-    /**
-     * 게시글 수정
-     */
+    // 게시글 수정
     @Override
     @Transactional
     public Map<String, Object> modifyPost(Long postUid, String title, String content, MultipartFile[] uploadFile) {
         Map<String, Object> result = new HashMap<>();
         
         try {
-            // 1. 게시글 수정
             Map<String, Object> param = new HashMap<>();
             param.put("postUid", postUid);
             param.put("title", title);
             param.put("content", content);
             
+            //게시글 수정
             postMapper.updatePost(param);
             
-            // 2. 파일이 새로 선택된 경우
+            // 파일이 새로 선택된 경우
             if (uploadFile != null && uploadFile.length > 0 && !uploadFile[0].isEmpty()) {
                 
-                // 2-1. 기존 파일 삭제 (실제 파일 + DB)
+                // 기존 파일 삭제 (실제 파일 + DB)
                 List<Map<String, Object>> oldFiles = postMapper.findFilesByPostUid(postUid);
                 for (Map<String, Object> oldFile : oldFiles) {
                     String storedName = (String) oldFile.get("storedName");
@@ -159,7 +163,7 @@ public class PostServiceImpl implements PostService {
                 }
                 postMapper.deleteFilesByPostUid(postUid);
                 
-                // 2-2. 새 파일 저장
+                // 새 파일 저장
                 for (MultipartFile file : uploadFile) {
                     if (!file.isEmpty()) {
                         saveFile(file, postUid);
@@ -193,19 +197,19 @@ public class PostServiceImpl implements PostService {
     @Override
     public void deletePost(Long postUid) {
 
-        // 1. 게시글의 모든 댓글 소프트 삭제
+        // 게시글의 모든 댓글 소프트 삭제
         try {
             int commentDeleted = postMapper.updateCommentDeleteYnByPostUid(postUid);
-            System.out.println("댓글 소프트 삭제 완료: " + commentDeleted + "개");
+            
         } catch (Exception e) {
             System.err.println("댓글 소프트 삭제 실패 (comment_tb에 deleteyn 컬럼이 없을 수 있음): " + e.getMessage());
             // 댓글 삭제 실패해도 게시글 삭제는 진행
         }
 
-        // 2. 첨부파일 조회
+        // 첨부파일 조회
         List<Map<String, Object>> files = postMapper.selectFilesByPostUid(postUid);
 
-        // 3. 실제 파일 물리적 삭제
+        // 실제 파일 물리적 삭제
         for (Map<String, Object> file : files) {
             // 대소문자 구분 없이 값 가져오기
             String filepath = getMapValue(file, "FILEPATH", "filePath");
@@ -234,9 +238,8 @@ public class PostServiceImpl implements PostService {
         System.out.println("게시글 소프트 삭제 완료: postUid=" + postUid);
     }
 
-    /**
-     * Map에서 대소문자 구분 없이 값 가져오기
-     */
+    
+    // Map에서 대소문자 구분 없이 값 가져오기
     private String getMapValue(Map<String, Object> map, String upperKey, String lowerKey) {
         Object value = map.get(upperKey);
         if (value == null) {
@@ -245,9 +248,8 @@ public class PostServiceImpl implements PostService {
         return value != null ? value.toString() : null;
     }
 
-    /**
-     * 파일 저장 (기존 write 로직 재사용)
-     */
+    
+    // 파일 저장
     private void saveFile(MultipartFile file, Long postUid) throws Exception {
         String originalName = file.getOriginalFilename();
         String storedName = UUID.randomUUID() + "_" + originalName;
@@ -273,9 +275,8 @@ public class PostServiceImpl implements PostService {
         postMapper.insertPostFile(fileParam);
     }
     
-    /**
-     * 실제 파일 삭제
-     */
+    
+    // 실제 파일 삭제
     private void deletePhysicalFile(String filePath, String storedName) {
         try {
             File file = new File(filePath, storedName);
@@ -291,10 +292,5 @@ public class PostServiceImpl implements PostService {
             System.err.println("파일 삭제 실패: " + filePath + "/" + storedName);
             e.printStackTrace();
         }
-    }
-
-    @Override
-    public void modify(Map<String, Object> param, List<MultipartFile> files) {
-        // 필요시 구현
     }
 }

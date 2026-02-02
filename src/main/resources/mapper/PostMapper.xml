@@ -7,30 +7,27 @@
 
 	<!-- 페이징으로 게시글 조회 -->
 	<select id="findPage" resultType="map">
-	    SELECT
-	          postUid
-	        , title
-	        , writeDate
-	        , username
-	        , DELETEYN
-	    FROM (
-	        SELECT
-	              P.POST_UID     AS postUid     /* 게시글 번호 */
-	            , P.TITLE        AS title       /* 제목 */
-	            , P.WRITE_DATE   AS writeDate   /* 작성일 */
-	            , U.USERNAME     AS username    /* 작성자 닉네임 */
-	            , ROW_NUMBER() OVER (			/* ROW_NUMBER() : 윈도우 함수. 조회된 각 행에 대해 중복 없이 1,2,3,4...순번 부여 */
-	                  ORDER BY P.POST_UID DESC	/* OVER : 이 함수가 어떤 범위와 규칙을 기준으로 계산될지 정의하는 절 */
-	              )               AS rn        /* 페이징용 순번 */
-              	, P.DELETEYN     AS DELETEYN
-	        FROM post_tb P
-	        JOIN user_tb U
-	          ON P.USER_UID = U.USER_UID
-	    )
-	    WHERE rn BETWEEN #{start} AND #{end}
+	    SELECT postUid
+	         , title
+	         , writeDate
+	         , username
+	         , DELETEYN
+	      FROM (
+	        SELECT P.POST_UID    				 AS postUid    			/* 게시글 번호 */
+	             , P.TITLE        				 AS title       		/* 제목 */
+	             , P.WRITE_DATE   				 AS writeDate   		/* 작성일 */
+	             , U.USERNAME     				 AS username    		/* 작성자 닉네임 */
+	             , ROW_NUMBER() 				 						/* ROW_NUMBER() : 윈도우 함수. 조회된 각 행에 대해 중복 없이 1,2,3,4...순번 부여 */
+	          OVER (ORDER BY P.POST_UID DESC) 	 AS rn					/* OVER : 이 함수가 어떤 범위와 규칙을 기준으로 계산될지 정의하는 절, rn = 페이징용 순번 */	
+              	 , P.DELETEYN     AS DELETEYN    						/* 삭제 유무 */
+	          FROM post_tb P
+	          JOIN user_tb U
+	            ON P.USER_UID = U.USER_UID
+	    		 )
+	    	 WHERE rn BETWEEN #{start} AND #{end}
 	</select>
 
-	
+	<!-- 총 페이지 수 조회 -->
 	<select id="countAll" resultType="int">
 	    SELECT COUNT(*)
 	    FROM POST_TB
@@ -38,21 +35,22 @@
 	
 	<!-- 게시글 저장 -->
     <insert id="insertPost" parameterType="map">
-	    INSERT INTO post_tb (
-	          post_uid
-	        , title
-	        , content
-	        , write_date
-	        , user_uid
-	        , deleteyn
-	    ) VALUES (
-	          post_seq.NEXTVAL
-	        , #{title}
-	        , #{content}
-	        , SYSDATE
-	        , #{userUid}
-	        , 'N'
-	    )
+	    INSERT INTO post_tb 
+	    	 ( post_uid				/* 게시글 번호 */
+       		 , title				/* 제목 */
+	         , content				/* 내용 */
+	         , write_date			/* 작성일 */				
+	         , user_uid				/* 작성자 번호 */
+	         , deleteyn				/* 삭제 유무 */
+	    	 )
+	    VALUES 
+	    	 ( post_seq.NEXTVAL
+	         , #{title}
+	         , #{content}
+	         , SYSDATE
+	         , #{userUid}
+	         , 'N'
+	    	 )
 	
 	    <selectKey keyProperty="postUid" resultType="long" order="AFTER">
 	        SELECT post_seq.CURRVAL FROM DUAL
@@ -61,98 +59,98 @@
 
     <!-- 파일 저장 -->
     <insert id="insertPostFile" parameterType="map">
-	    INSERT INTO post_file_tb (
-	          file_uid
-	        , original_name
-	        , stored_name
-	        , file_path
-	        , file_type
-	        , upload_date
-	        , post_uid
-	    ) VALUES (
-	          post_file_seq.NEXTVAL
-	        , #{originalName}
-	        , #{storedName}
-	        , #{filePath}
-	        , #{fileType}
-	        , SYSDATE
-	        , #{postUid}
-	    )
+	    INSERT INTO post_file_tb
+	    	 ( file_uid				/* 파일 번호 */
+	         , original_name		/* 파일 이름 */
+	         , stored_name			/* DB에 저장되는 파일 이름 */	
+	         , file_path			/* 파일 경로 */
+	         , file_type			/* 파일 타입 */
+	         , upload_date			/* 올린 날짜 */
+	         , post_uid				/* 부모 게시글 번호 */
+	    	 )
+	    VALUES
+	    	 ( post_file_seq.NEXTVAL
+	         , #{originalName}
+	         , #{storedName}
+	         , #{filePath}
+	         , #{fileType}
+	         , SYSDATE
+	         , #{postUid}
+	    	 )
 	</insert>
     
+    <!-- ID로 게시글 정보 조회 -->
     <select id="findById" resultType="map">
-	    SELECT
-	          P.POST_UID     AS postUid     /* 게시글 번호 */
-	        , P.TITLE        AS title       /* 제목 */
-	        , P.CONTENT      AS content     /* 내용 */
-	        , P.WRITE_DATE   AS writeDate   /* 작성일 */
-	        , U.USERNAME     AS username    /* 작성자 */
-	        , P.USER_UID     AS userUid     /* 작성자 UID */
-	    FROM post_tb P
-	    JOIN user_tb U
-	      ON P.USER_UID = U.USER_UID
-	    WHERE P.POST_UID = #{postUid}
+	    SELECT P.POST_UID     AS postUid     /* 게시글 번호 */
+	         , P.TITLE        AS title       /* 제목 */
+	         , P.CONTENT      AS content     /* 내용 */
+	         , P.WRITE_DATE   AS writeDate   /* 작성일 */
+	         , U.USERNAME     AS username    /* 작성자 */
+	         , P.USER_UID     AS userUid     /* 작성자 번호 */
+	      FROM post_tb P
+	      JOIN user_tb U
+	        ON P.USER_UID = U.USER_UID
+	     WHERE P.POST_UID = #{postUid}
 	</select>
 
+	<!-- 게시글 ID로 파일 정보 조회 -->
 	<select id="findFilesByPostUid" resultType="map">
-	    SELECT
-	          file_uid        AS fileUid        /* 파일 번호 */
-	        , original_name   AS originalName   /* 원본 파일명 */
-	        , stored_name     AS storedName     /* 저장 파일명 */
-	        , file_path       AS filePath       /* 파일 경로 */
-	    FROM post_file_tb
-	    WHERE post_uid = #{postUid}
+	    SELECT file_uid        AS fileUid        /* 파일 번호 */
+	         , original_name   AS originalName   /* 원본 파일명 */
+	         , stored_name     AS storedName     /* 저장 파일명 */
+	         , file_path       AS filePath       /* 파일 경로 */
+	      FROM post_file_tb
+	     WHERE post_uid = #{postUid}
 	</select>
 	
+	<!-- 파일 ID로 파일 정보 조회 -->
 	<select id="findFileByUid" resultType="map">
-	    SELECT
-	          file_uid        AS fileUid        /* 파일 번호 */
-	        , original_name   AS originalName   /* 원본 파일명 */
-	        , stored_name     AS storedName     /* 저장 파일명 */
-	        , file_path       AS filePath       /* 파일 경로 */
-	        , file_type       AS fileType       /* MIME 타입 */
-	    FROM post_file_tb
-	    WHERE file_uid = #{fileUid}
+	    SELECT file_uid        AS fileUid        /* 파일 번호 */
+	         , original_name   AS originalName   /* 원본 파일명 */
+	         , stored_name     AS storedName     /* 저장 파일명 */
+	         , file_path       AS filePath       /* 파일 경로 */
+	         , file_type       AS fileType       /* 파일 타입 */
+	      FROM post_file_tb
+	     WHERE file_uid = #{fileUid}
 	</select>
 	
 	<!-- 게시글 수정 -->
 	<update id="updatePost" parameterType="map">
 	    UPDATE post_tb
-	    SET
-	          TITLE        = #{title}     /* 제목 */
-	        , CONTENT      = #{content}   /* 내용 */
-	        , MODIFY_DATE  = SYSDATE       /* 수정일 */
-	    WHERE POST_UID = #{postUid}        /* 게시글 번호 */
+	  	   SET TITLE        = #{title}     /* 제목 */
+	         , CONTENT      = #{content}   /* 내용 */
+	         , MODIFY_DATE  = SYSDATE      /* 수정일 */
+	     WHERE POST_UID = #{postUid}       /* 게시글 번호 */
 	</update>
 	
 	<!-- 게시글 소프트 삭제 -->
 	<update id="updatePostDeleteYn" parameterType="long">
 	    UPDATE post_tb
-	    SET deleteyn = 'Y'
-	    WHERE post_uid = #{postUid}
+	       SET deleteyn = 'Y'
+	     WHERE post_uid = #{postUid}
 	</update>
 	
 	<!-- 게시글의 모든 댓글 소프트 삭제 -->
 	<update id="updateCommentDeleteYnByPostUid" parameterType="long">
 	    UPDATE comment_tb
-	    SET deleteyn = 'Y'
-	    WHERE post_uid = #{postUid}
+	       SET deleteyn = 'Y'
+	     WHERE post_uid = #{postUid}
 	</update>
 	
 	<!-- 게시글 첨부파일 조회 -->
 	<select id="selectFilesByPostUid" parameterType="long" resultType="map">
-	    SELECT 
-	          FILE_UID      AS fileUid
-	        , FILE_PATH     AS filePath
-	        , STORED_NAME   AS storedName
-	    FROM post_file_tb
-	    WHERE post_uid = #{postUid}
+	    SELECT FILE_UID      AS fileUid			/* 파일 번호 */
+	         , FILE_PATH     AS filePath		/* 파일 경로 */
+	         , STORED_NAME   AS storedName		/* 저장 파일명 */
+	      FROM post_file_tb
+	     WHERE post_uid = #{postUid}
 	</select>
 	
 	<!-- 게시글 첨부파일 DB 삭제 -->
 	<delete id="deleteFilesByPostUid" parameterType="long">
-	    DELETE FROM post_file_tb
-	    WHERE post_uid = #{postUid}
+	    DELETE 
+	      FROM post_file_tb
+	     WHERE post_uid = #{postUid}
 	</delete>
 
 </mapper>

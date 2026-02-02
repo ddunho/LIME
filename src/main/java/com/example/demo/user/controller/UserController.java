@@ -40,7 +40,7 @@ public class UserController {
 	}
 
     
-  //회원가입
+  // 회원가입
     @PostMapping("/signup")
     @ResponseBody
     public Map<String, Object> signup(@RequestBody User user) {
@@ -56,7 +56,7 @@ public class UserController {
         return resultMap;
     }
     
-    //이메일 중복 체크
+    // 이메일 중복 체크
     @PostMapping("/check-email")
     @ResponseBody
     public Boolean checkEmail(
@@ -68,7 +68,7 @@ public class UserController {
     }
     
     
-    //아이디 중복 체크
+    // 아이디 중복 체크
     @PostMapping("/check-userName")
     @ResponseBody
     public Boolean checkUserName(
@@ -79,7 +79,7 @@ public class UserController {
         return exists;
     }
     
-    //로그인
+    // 로그인
     @PostMapping("/login")
     @ResponseBody
     public boolean login(
@@ -99,7 +99,7 @@ public class UserController {
         return false;
     }
     
-    //로그아웃
+    // 로그아웃
     @GetMapping("/logout")
     @ResponseBody
     public void logout(HttpSession session) {

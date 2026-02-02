@@ -19,62 +19,7 @@
   <div id="wrapper">
 
     <!-- Sidebar -->
-    <ul class="navbar-nav bg-gradient-primary sidebar sidebar-dark accordion" id="accordionSidebar">
-
-      <!-- Sidebar - Brand -->
-      <a class="sidebar-brand d-flex align-items-center justify-content-center" href="/">
-        <div class="sidebar-brand-icon rotate-n-15">
-          <i class="fas fa-laugh-wink"></i>
-        </div>
-        <div class="sidebar-brand-text mx-3">게시판</div>
-      </a>
-
-      <!-- Divider -->
-      <hr class="sidebar-divider my-0" />
-
-      <!-- Nav Item - Pages Collapse Menu -->
-	  <li class="nav-item">
-	       <a class="nav-link collapsed" href="#" data-toggle="collapse" data-target="#collapsePages"
-	          aria-expanded="true" aria-controls="collapsePages">
-	         <i class="fas fa-fw fa-folder"></i>
-	         <span>Pages</span>
-	       </a>
-	       <div id="collapsePages" class="collapse" aria-labelledby="headingPages" data-parent="#accordionSidebar">
-	         <div class="bg-white py-2 collapse-inner rounded">
-	           <h6 class="collapse-header">Login Screens:</h6>
-	  	  <c:choose>
-	  	    <c:when test="${not empty LOGIN_USER}">
-	  			<a class="collapse-item" href="#"
-	  			   data-toggle="modal" data-target="#logoutModal">
-	  			  Logout
-	  			</a>
-	  	    </c:when>
-	  		<c:otherwise>
-	  		  <a class="collapse-item" href="/login">Login</a>
-	  		</c:otherwise>
-	  	  </c:choose>
-
-	           <a class="collapse-item" href="/membership">membership</a>
-	         </div>
-	       </div>
-	     </li>
-
-      <!-- Nav Item - Tables -->
-      <li class="nav-item active">
-        <a class="nav-link" href="/tables">
-          <i class="fas fa-fw fa-table"></i>
-          <span>Tables</span>
-        </a>
-      </li>
-
-      <!-- Divider -->
-      <hr class="sidebar-divider d-none d-md-block" />
-
-      <!-- Sidebar Toggler (Sidebar) -->
-      <div class="text-center d-none d-md-inline">
-        <button class="rounded-circle border-0" id="sidebarToggle"></button>
-      </div>
-    </ul>
+	<jsp:include page="/WEB-INF/views/common/sidebar.jsp" />
     <!-- End of Sidebar -->
 
     <!-- Content Wrapper -->
@@ -84,61 +29,7 @@
       <div id="content">
 
         <!-- Topbar -->
-        <nav class="navbar navbar-expand navbar-light bg-white topbar mb-4 static-top shadow">
-
-          <!-- Sidebar Toggle (Topbar) -->
-          <form class="form-inline">
-            <button id="sidebarToggleTop" class="btn btn-link d-md-none rounded-circle mr-3" type="button">
-              <i class="fa fa-bars"></i>
-            </button>
-          </form>
-
-          <!-- Topbar Navbar -->
-          <ul class="navbar-nav ml-auto">
-            <div class="topbar-divider d-none d-sm-block"></div>
-
-            <!-- Nav Item - User Information -->
-			<li class="nav-item dropdown no-arrow">
-
-			  <c:choose>
-			    <c:when test="${not empty LOGIN_USER}">
-			      <a class="nav-link dropdown-toggle" href="#" id="userDropdown" role="button"
-			         data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
-			        <span class="mr-2 d-none d-lg-inline text-gray-600 small">
-			          ${LOGIN_USER.username}
-			        </span>
-			        <img class="img-profile rounded-circle" src="/img/undraw_profile.svg" />
-			      </a>
-			      
-			      
-			      <div class="dropdown-menu dropdown-menu-right shadow animated--grow-in"
-			           aria-labelledby="userDropdown">
-			        <a class="dropdown-item" href="#">
-			          <i class="fas fa-user fa-sm fa-fw mr-2 text-gray-400"></i>
-			          Profile
-			        </a>
-			        <div class="dropdown-divider"></div>
-			        <a class="dropdown-item" href="#"
-			           data-toggle="modal" data-target="#logoutModal">
-			          <i class="fas fa-sign-out-alt fa-sm fa-fw mr-2 text-gray-400"></i>
-			          Logout
-			        </a>
-			      </div>
-			    </c:when>
-
-			    <c:otherwise>
-			      <a class="nav-link" href="/login">
-			        <span class="mr-2 d-none d-lg-inline text-gray-600 small">
-			          guest
-			        </span>
-			        <img class="img-profile rounded-circle" src="/img/undraw_profile.svg" />
-			      </a>
-			    </c:otherwise>
-			  </c:choose>
-
-			</li>
-          </ul>
-        </nav>
+		<jsp:include page="/WEB-INF/views/common/topbar.jsp" />
         <!-- End of Topbar -->
 
         <!-- Begin Page Content -->
@@ -234,13 +125,7 @@
       <!-- End of Main Content -->
 
       <!-- Footer -->
-      <footer class="sticky-footer bg-white">
-        <div class="container my-auto">
-          <div class="copyright text-center my-auto">
-            <span>풋터</span>
-          </div>
-        </div>
-      </footer>
+	  <jsp:include page="/WEB-INF/views/common/footer.jsp" />
       <!-- End of Footer -->
 
     </div>

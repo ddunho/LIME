@@ -16,9 +16,7 @@ public class CommentServiceImpl implements CommentService {
     @Autowired
     private CommentMapper commentMapper;
     
-    /**
-     * 댓글 등록 (depth는 LEVEL로 자동 계산)
-     */
+    // 댓글 등록
     @Override
     @Transactional
     public Map<String, Object> insertComment(Map<String, Object> params) {
@@ -43,7 +41,7 @@ public class CommentServiceImpl implements CommentService {
                 params.put("parent_comment_uid", null);
             }
             
-            // 댓글 등록 (depth는 쿼리의 LEVEL로 자동 계산됨)
+            // 댓글 등록 (depth는 쿼리의 LEVEL로 자동 계산)
             int insertResult = commentMapper.insertComment(params);
             
             if (insertResult > 0) {
@@ -64,9 +62,7 @@ public class CommentServiceImpl implements CommentService {
         return result;
     }
     
-    /**
-     * 댓글 수정
-     */
+    // 댓글 수정
     @Override
     @Transactional
     public boolean updateComment(Map<String, Object> params) {
@@ -79,9 +75,7 @@ public class CommentServiceImpl implements CommentService {
         }
     }
     
-    /**
-     * 댓글 삭제 (소프트 삭제)
-     */
+    // 댓글 삭제
     @Override
     @Transactional
     public boolean deleteComment(Long commentUid) {
@@ -89,19 +83,10 @@ public class CommentServiceImpl implements CommentService {
         return result > 0;
     }
     
-    /**
-     * 댓글 목록 조회
-     */
+    // 댓글 목록 조회
     @Override
     public List<Map<String, Object>> getCommentList(Map<String, Object> params) {
         return commentMapper.selectCommentList(params);
     }
     
-    /**
-     * 댓글 상세 조회
-     */
-    @Override
-    public Map<String, Object> getComment(Map<String, Object> params) {
-        return commentMapper.selectComment(params);
-    }
 }

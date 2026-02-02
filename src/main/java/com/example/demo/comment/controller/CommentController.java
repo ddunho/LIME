@@ -51,7 +51,7 @@ public class CommentController {
         Map<String, Object> result = new HashMap<>();
         
         try {
-            // 세션에서 User 객체로 가져오기
+            // 로그인 인증
             User loginUser = (User) session.getAttribute("LOGIN_USER");
             
             if (loginUser == null) {
@@ -120,6 +120,7 @@ public class CommentController {
                 return result;
             }
             
+            // 댓글 수정
             boolean updateResult = commentService.updateComment(params);
             
             if (updateResult) {
@@ -139,9 +140,7 @@ public class CommentController {
         return result;
     }
     
-    /**
-     * 댓글 삭제
-     */
+    // 댓글 삭제
     @PostMapping("/delete")
     @ResponseBody
     public Map<String, Object> deleteComment(@RequestParam Long commentUid,
@@ -150,6 +149,7 @@ public class CommentController {
         Map<String, Object> result = new HashMap<>();
 
         try {
+        	// 로그인 인증
             User loginUser = (User) session.getAttribute("LOGIN_USER");
             if (loginUser == null) {
                 result.put("success", false);
