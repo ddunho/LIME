@@ -1,12 +1,16 @@
 import { useEffect, useState } from "react";
-import axios from "axios";
+import useAuthStore from "../store/authStore";
+import { useNavigate } from "react-router-dom";
 
 function Login() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [rememberMe, setRememberMe] = useState(false);
 
-  // Remember Me 로컬스토리지 로드
+  const login = useAuthStore((state) => state.login);
+  const navigate = useNavigate();
+
+  // Remember Me
   useEffect(() => {
     const savedEmail = localStorage.getItem("REMEMBER_EMAIL");
     if (savedEmail) {
@@ -28,22 +32,16 @@ function Login() {
     localStorage.removeItem("REMEMBER_EMAIL");
   }
 
-  try {
-    const res = await axios.post("/user/login", {
-      email,
-      password,
-    });
+  const result = await login({ email, password });
 
-    if (res.data.success) {
-      alert("로그인 성공!");
-      window.location.href = "/";
-    } else {
-      alert(res.data.msg || "이메일 또는 비밀번호가 올바르지 않습니다.");
-    }
-  } catch (e) {
-    alert("서버 오류가 발생했습니다.");
+  if (result.success) {
+    alert("로그인 성공!");
+    navigate("/");
+  } else {
+    alert(result.msg || "로그인 실패");
   }
 };
+
 
   // Enter 키 로그인
   const handleKeyDown = (e) => {

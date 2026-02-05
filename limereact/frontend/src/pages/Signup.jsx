@@ -21,60 +21,109 @@ function Signup() {
 
   const [isUsernameValid, setIsUsernameValid] = useState(false);
   const [isEmailValid, setIsEmailValid] = useState(false);
-
-  /* ================= 공통 입력 처리 ================= */
-  const handleChange = (e) => {
-    const { name, value } = e.target;
-    setForm((prev) => ({ ...prev, [name]: value }));
-  };
+  const [usernameMsg, setUsernameMsg] = useState("");
+  const [emailMsg, setEmailMsg] = useState("");
 
   /* ================= Username ================= */
+  const handleUsernameChange = (e) => {
+    const filtered = e.target.value.replace(/[^a-zA-Z0-9]/g, "");
+    setForm((prev) => ({ ...prev, username: filtered }));
+    setIsUsernameValid(false);
+    setUsernameMsg("");
+  };
+
   const handleUsernameBlur = async () => {
-    if (!form.username) {
-      alert("닉네임을 입력해주세요.");
+    const username = form.username;
+
+    if (!username) {
+      setUsernameMsg("닉네임을 입력해주세요.");
+      setIsUsernameValid(false);
       return;
     }
 
-    if (form.username.length > 10) {
-      alert("닉네임은 10글자 이하입니다.");
+    if (username.length > 10) {
+      setUsernameMsg("닉네임은 10글자 이하로 입력해주세요.");
+      setIsUsernameValid(false);
       return;
     }
 
     try {
       const res = await axios.post("/user/check-userName", {
-        userName: form.username,
+        userName: username,
       });
-      if (!res.data) {
-        alert("사용 가능한 닉네임입니다.");
+      if (!res.data.exists) {
+        setUsernameMsg("사용 가능한 닉네임입니다.");
         setIsUsernameValid(true);
       } else {
-        alert("이미 존재하는 닉네임입니다.");
+        setUsernameMsg("이미 존재하는 닉네임입니다.");
         setIsUsernameValid(false);
       }
     } catch {
-      alert("닉네임 중복 확인 오류");
+      setUsernameMsg("중복 확인 중 오류가 발생했습니다.");
       setIsUsernameValid(false);
     }
   };
 
   /* ================= Email ================= */
-  const checkEmail = async () => {
-    if (!emailRegex.test(form.email)) {
-      alert("이메일 형식이 올바르지 않습니다.");
-      return;
-    }
+  const handleEmailChange = (e) => {
+    const filtered = e.target.value.replace(/[^a-zA-Z0-9@._-]/g, "");
+    setForm((prev) => ({ ...prev, email: filtered }));
+    setIsEmailValid(false);
+    setEmailMsg("");
+  };
 
+  const checkEmail = async () => {
+  const email = form.email;
+
+  if (!emailRegex.test(email)) {
+    alert("이메일 형식이 올바르지 않습니다.");
+    return;
+  }
+
+  try {
     const res = await axios.post("/user/check-email", {
-      email: form.email,
+      email: email,
     });
 
-    if (res.data) {
+    if (res.data.exists) {
       alert("이미 사용 중인 이메일입니다.");
       setIsEmailValid(false);
     } else {
       alert("사용 가능한 이메일입니다.");
       setIsEmailValid(true);
     }
+  } catch {
+    alert("이메일 중복 확인 중 오류가 발생했습니다.");
+    setIsEmailValid(false);
+  }
+};
+
+  /* ================= Password ================= */
+  const handlePasswordChange = (e) => {
+    const filtered = e.target.value.replace(/[^A-Za-z0-9@$!%*#?&]/g, "");
+    setForm((prev) => ({ ...prev, password: filtered }));
+  };
+
+  const handlePasswordBlur = () => {
+    if (!pwRegex.test(form.password)) {
+      alert("비밀번호는 8-15자이며, 영문, 숫자, 특수문자를 모두 포함해야 합니다.");
+    } else {
+      alert("사용 가능한 비밀번호입니다.");
+    }
+  };
+
+  /* ================= Password Confirm ================= */
+  const handlePasswordConfirmChange = (e) => {
+    const filtered = e.target.value.replace(/[^A-Za-z0-9@$!%*#?&]/g, "");
+    setForm((prev) => ({ ...prev, passwordConfirm: filtered }));
+  };
+
+  const handlePasswordConfirmBlur = () => {
+    alert(
+      form.passwordConfirm === form.password
+        ? "비밀번호가 일치합니다."
+        : "비밀번호가 일치하지 않습니다."
+    );
   };
 
   /* ================= Phone ================= */
@@ -86,6 +135,22 @@ function Signup() {
       v = v.slice(0, 3) + "-" + v.slice(3, 7) + "-" + v.slice(7, 11);
 
     setForm((p) => ({ ...p, phone: v }));
+  };
+
+  const handlePhoneBlur = () => {
+    const phoneWithoutHyphen = form.phone.replace(/-/g, "");
+    const phoneRegex = /^010\d{8}$/;
+
+    alert(
+      phoneRegex.test(phoneWithoutHyphen)
+        ? "올바른 휴대폰 번호입니다."
+        : "휴대폰 번호 형식이 올바르지 않습니다. (010으로 시작하는 11자리)"
+    );
+  };
+
+  /* ================= Address Detail ================= */
+  const handleAddressDetailChange = (e) => {
+    setForm((prev) => ({ ...prev, addressDetail: e.target.value }));
   };
 
   /* ================= Daum 주소 ================= */
@@ -103,47 +168,94 @@ function Signup() {
   };
 
   /* ================= Signup ================= */
-  const handleSignup = async () => {
-  const phone = form.phone.replace(/-/g, "");
+  const handleSignup = async (e) => {
+    e.preventDefault();
 
-  if (!isUsernameValid || !isEmailValid) {
-    alert("중복 확인을 완료해주세요.");
-    return;
-  }
+    const phoneWithoutHyphen = form.phone.replace(/-/g, "");
 
-  if (!pwRegex.test(form.password)) {
-    alert("비밀번호 형식이 올바르지 않습니다.");
-    return;
-  }
+    const data = {
+      username: form.username,
+      email: form.email,
+      password: form.password,
+      passwordConfirm: form.passwordConfirm,
+      phone: phoneWithoutHyphen,
+      address: form.address,
+      addressDetail: form.addressDetail,
+      addressExtra: form.addressExtra,
+      zipcode: form.zipcode,
+    };
 
-  if (form.password !== form.passwordConfirm) {
-    alert("비밀번호가 일치하지 않습니다.");
-    return;
-  }
-
-  if (!/^010\d{8}$/.test(phone)) {
-    alert("휴대폰 번호 형식 오류");
-    return;
-  }
-
-  if (!confirm("회원가입을 하시겠습니까?")) return;
-
-  try {
-    const res = await axios.post("/user/signup", {
-      ...form,
-      phone,
-    });
-
-    if (res.data.result) {
-      alert(res.data.msg);
-      window.location.href = "/login";
-    } else {
-      alert(res.data.msg);
+    // 필수 항목 체크
+    if (!data.username || !data.email || !data.password || !data.passwordConfirm || !data.phone) {
+      alert("모든 필수 항목을 입력하세요.");
+      return;
     }
-  } catch (error) {
-    alert("회원가입 중 오류가 발생했습니다.");
-  }
-};
+
+    // 닉네임 길이 체크
+    if (data.username.length > 10) {
+      alert("닉네임은 10글자 이하로 입력해주세요.");
+      return;
+    }
+
+    // 닉네임 중복확인 체크
+    if (!isUsernameValid) {
+      alert("닉네임 중복확인을 완료해주세요.");
+      return;
+    }
+
+    // 이메일 형식 체크
+    if (!emailRegex.test(data.email)) {
+      alert("이메일 형식이 올바르지 않습니다.");
+      return;
+    }
+
+    // 이메일 길이 체크
+    if (data.email.length > 254) {
+      alert("이메일은 254글자 이하로 입력해주세요.");
+      return;
+    }
+
+    // 이메일 중복확인 체크
+    if (!isEmailValid) {
+      alert("이메일 중복확인을 완료해주세요.");
+      return;
+    }
+
+    // 비밀번호 유효성 체크
+    if (!pwRegex.test(data.password)) {
+      alert("비밀번호는 8-15자이며, 영문, 숫자, 특수문자를 모두 포함해야 합니다.");
+      return;
+    }
+
+    // 비밀번호 일치 체크
+    if (data.password !== data.passwordConfirm) {
+      alert("비밀번호가 일치하지 않습니다.");
+      return;
+    }
+
+    // 휴대폰 번호 유효성 체크
+    const phoneRegex = /^010\d{8}$/;
+    if (!phoneRegex.test(data.phone)) {
+      alert("휴대폰 번호 형식이 올바르지 않습니다. (010으로 시작하는 11자리)");
+      return;
+    }
+
+    if (!window.confirm("회원가입을 하시겠습니까?")) return;
+
+    try {
+  const res = await axios.post("/user/signup", data);
+  
+
+      if (res.data.result) {
+        alert(res.data.msg);
+        window.location.href = "/login";
+      } else {
+        alert(res.data.msg);
+      }
+    } catch (error) {
+      alert("회원가입 중 오류가 발생했습니다.");
+    }
+  };
 
   /* ================= Daum Script ================= */
   useEffect(() => {
@@ -155,82 +267,195 @@ function Signup() {
   }, []);
 
   return (
-    <div className="container bg-gradient-primary">
-      <div className="card shadow-lg my-5">
-        <div className="card-body p-5">
-          <h4 className="text-center mb-4">회원가입</h4>
+    <div className="bg-gradient-primary">
+      <div className="container">
+        <div className="card o-hidden border-0 shadow-lg my-5">
+          <div className="card-body p-0">
+            <div className="row">
+              <div className="col-lg-5 d-none d-lg-block bg-register-image"></div>
 
-          <input
-            name="username"
-            placeholder="닉네임"
-            className="form-control mb-2"
-            value={form.username}
-            onChange={handleChange}
-            onBlur={handleUsernameBlur}
-          />
+              <div className="col-lg-7">
+                <div className="p-5">
+                  <div className="text-center">
+                    <h1 className="h4 text-gray-900 mb-4">회원가입</h1>
+                  </div>
 
-          <div className="d-flex gap-2 mb-2">
-            <input
-              name="email"
-              placeholder="이메일"
-              className="form-control"
-              value={form.email}
-              onChange={handleChange}
-            />
-            <button className="btn btn-primary" onClick={checkEmail}>
-              중복확인
-            </button>
+                  <form className="user">
+                    {/* username */}
+                    <div className="form-group">
+                      <input
+                        type="text"
+                        className="form-control form-control-user"
+                        name="username"
+                        maxLength="10"
+                        placeholder="이름 (최대 10글자)"
+                        value={form.username}
+                        onChange={handleUsernameChange}
+                        onBlur={handleUsernameBlur}
+                      />
+                      <small
+                        id="usernameMsg"
+                        style={{
+                          color: usernameMsg.includes("가능") ? "green" : "red",
+                        }}
+                      >
+                        {usernameMsg}
+                      </small>
+                    </div>
+
+                    {/* email */}
+                    <div className="form-group row">
+                      <div className="col-sm-9 mb-3 mb-sm-0">
+                        <input
+                          type="email"
+                          className="form-control form-control-user"
+                          name="email"
+                          maxLength="254"
+                          placeholder="이메일주소 (최대 254글자)"
+                          value={form.email}
+                          onChange={handleEmailChange}
+                        />
+                        <small
+                          id="emailMsg"
+                          style={{
+                            color: emailMsg.includes("가능") ? "green" : "red",
+                          }}
+                        >
+                          {emailMsg}
+                        </small>
+                      </div>
+                      <div className="col-sm-3">
+                        <button
+                          type="button"
+                          className="btn btn-primary btn-user btn-block"
+                          onClick={checkEmail}
+                        >
+                          중복확인
+                        </button>
+                      </div>
+                    </div>
+
+                    {/* password */}
+                    <div className="form-group row">
+                      <div className="col-sm-6 mb-3 mb-sm-0">
+                        <input
+                          type="password"
+                          className="form-control form-control-user"
+                          name="password"
+                          maxLength="15"
+                          placeholder="비밀번호 (8-15자)"
+                          value={form.password}
+                          onChange={handlePasswordChange}
+                          onBlur={handlePasswordBlur}
+                        />
+                      </div>
+                      <div className="col-sm-6">
+                        <input
+                          type="password"
+                          className="form-control form-control-user"
+                          name="passwordConfirm"
+                          maxLength="15"
+                          placeholder="비밀번호 확인"
+                          value={form.passwordConfirm}
+                          onChange={handlePasswordConfirmChange}
+                          onBlur={handlePasswordConfirmBlur}
+                        />
+                      </div>
+                    </div>
+
+                    {/* phone */}
+                    <div className="form-group">
+                      <input
+                        type="text"
+                        className="form-control form-control-user"
+                        name="phone"
+                        maxLength="13"
+                        placeholder="휴대폰번호 (010-0000-0000)"
+                        value={form.phone}
+                        onChange={handlePhoneChange}
+                        onBlur={handlePhoneBlur}
+                      />
+                    </div>
+
+                    {/* address */}
+                    <div className="form-group row">
+                      <div className="col-sm-9 mb-3 mb-sm-0">
+                        <input
+                          type="text"
+                          className="form-control form-control-user"
+                          name="address"
+                          readOnly
+                          placeholder="주소"
+                          value={form.address}
+                        />
+                      </div>
+                      <div className="col-sm-3">
+                        <button
+                          type="button"
+                          className="btn btn-primary btn-user btn-block"
+                          onClick={execDaumPostCode}
+                        >
+                          주소찾기
+                        </button>
+                      </div>
+                    </div>
+
+                    <div className="form-group">
+                      <input
+                        type="text"
+                        className="form-control form-control-user"
+                        name="addressDetail"
+                        maxLength="254"
+                        placeholder="상세주소"
+                        value={form.addressDetail}
+                        onChange={handleAddressDetailChange}
+                      />
+                    </div>
+
+                    <div className="form-group row">
+                      <div className="col-sm-6 mb-3 mb-sm-0">
+                        <input
+                          type="text"
+                          className="form-control form-control-user"
+                          name="zipcode"
+                          readOnly
+                          placeholder="우편번호"
+                          value={form.zipcode}
+                        />
+                      </div>
+                      <div className="col-sm-6">
+                        <input
+                          type="text"
+                          className="form-control form-control-user"
+                          name="addressExtra"
+                          readOnly
+                          placeholder="참고사항"
+                          value={form.addressExtra}
+                        />
+                      </div>
+                    </div>
+
+                    
+                    <a href="#"
+                      id="btnSignup"
+                      className="btn btn-primary btn-user btn-block"
+                      onClick={handleSignup}
+                    >
+                      Register Account
+                    </a>
+                  </form>
+
+                  <hr />
+
+                  <div className="text-center">
+                    <a className="small" href="/login">
+                      Already have an account? Login!
+                    </a>
+                  </div>
+                </div>
+              </div>
+            </div>
           </div>
-
-          <input
-            type="password"
-            name="password"
-            placeholder="비밀번호"
-            className="form-control mb-2"
-            onChange={handleChange}
-          />
-          <input
-            type="password"
-            name="passwordConfirm"
-            placeholder="비밀번호 확인"
-            className="form-control mb-2"
-            onChange={handleChange}
-          />
-
-          <input
-            name="phone"
-            placeholder="휴대폰번호"
-            className="form-control mb-2"
-            value={form.phone}
-            onChange={handlePhoneChange}
-          />
-
-          <div className="d-flex gap-2 mb-2">
-            <input
-              name="address"
-              readOnly
-              className="form-control"
-              value={form.address}
-              placeholder="주소"
-            />
-            <button className="btn btn-primary" onClick={execDaumPostCode}>
-              주소찾기
-            </button>
-          </div>
-
-          <input
-            name="addressDetail"
-            placeholder="상세주소"
-            className="form-control mb-2"
-            onChange={handleChange}
-          />
-
-          <button
-            className="btn btn-primary btn-block mt-3"
-            onClick={handleSignup}
-          >
-            Register Account
-          </button>
         </div>
       </div>
     </div>

@@ -16,7 +16,7 @@ function App() {
         <Route path="/signup" element={<Signup />} />
         <Route path="/write" element={<Write />} />
         <Route path="/detail/:postUid" element={<PostDetail />} />
-        <Route path="/modify/:postUid" element={<Modify />} />
+        <Route path="/modify/:postUid" element={<Modify />} />  
         <Route path="*" element={<NotFound/>}/>
       </Routes>
     </BrowserRouter>
