@@ -15,10 +15,8 @@ function MainPage() {
   const [totalPages, setTotalPages] = useState(1);
 
   const isLogin = useAuthStore((state) => state.isLogin);
-  const logout = useAuthStore((state) => state.logout);
 
   useEffect(() => {
-    // 페이지 타이틀 설정
     document.title = "Tables";
   }, []);
 

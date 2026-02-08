@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react";
 import axios from "axios";
 
 const pwRegex =
@@ -21,8 +21,15 @@ function Signup() {
 
   const [isUsernameValid, setIsUsernameValid] = useState(false);
   const [isEmailValid, setIsEmailValid] = useState(false);
+  const [isPasswordValid, setIsPasswordValid] = useState(false);
+  const [isPasswordMatch, setIsPasswordMatch] = useState(false);
   const [usernameMsg, setUsernameMsg] = useState("");
   const [emailMsg, setEmailMsg] = useState("");
+  const [passwordChecked, setPasswordChecked] = useState(false);
+  const [passwordConfirmChecked, setPasswordConfirmChecked] = useState(false);
+
+  const passwordRef = useRef(null);
+  const passwordConfirmRef = useRef(null);
 
   /* ================= Username ================= */
   const handleUsernameChange = (e) => {
@@ -73,57 +80,95 @@ function Signup() {
   };
 
   const checkEmail = async () => {
-  const email = form.email;
+    const email = form.email;
 
-  if (!emailRegex.test(email)) {
-    alert("이메일 형식이 올바르지 않습니다.");
-    return;
-  }
-
-  try {
-    const res = await axios.post("/user/check-email", {
-      email: email,
-    });
-
-    if (res.data.exists) {
-      alert("이미 사용 중인 이메일입니다.");
-      setIsEmailValid(false);
-    } else {
-      alert("사용 가능한 이메일입니다.");
-      setIsEmailValid(true);
+    if (!emailRegex.test(email)) {
+      alert("이메일 형식이 올바르지 않습니다.");
+      return;
     }
-  } catch {
-    alert("이메일 중복 확인 중 오류가 발생했습니다.");
-    setIsEmailValid(false);
-  }
-};
+
+    try {
+      const res = await axios.post("/user/check-email", {
+        email: email,
+      });
+
+      if (res.data.exists) {
+        alert("이미 사용 중인 이메일입니다.");
+        setIsEmailValid(false);
+      } else {
+        alert("사용 가능한 이메일입니다.");
+        setIsEmailValid(true);
+      }
+    } catch {
+      alert("이메일 중복 확인 중 오류가 발생했습니다.");
+      setIsEmailValid(false);
+    }
+  };
 
   /* ================= Password ================= */
   const handlePasswordChange = (e) => {
     const filtered = e.target.value.replace(/[^A-Za-z0-9@$!%*#?&]/g, "");
     setForm((prev) => ({ ...prev, password: filtered }));
+    setIsPasswordValid(false);
+    setIsPasswordMatch(false);
+    setPasswordChecked(false);
+    setPasswordConfirmChecked(false);
   };
 
-  const handlePasswordBlur = () => {
-    if (!pwRegex.test(form.password)) {
-      alert("비밀번호는 8-15자이며, 영문, 숫자, 특수문자를 모두 포함해야 합니다.");
-    } else {
-      alert("사용 가능한 비밀번호입니다.");
+  const handlePasswordConfirmFocus = () => {
+    // 이미 검증했으면 다시 검증하지 않음
+    if (passwordChecked) {
+      return;
     }
+
+    const password = form.password;
+
+    if (!password) {
+      return;
+    }
+
+    if (!pwRegex.test(password)) {
+      alert("비밀번호는 8-15자이며, 영문, 숫자, 특수문자를 모두 포함해야 합니다.");
+      setIsPasswordValid(false);
+      setPasswordChecked(true);
+      return;
+    }
+
+    alert("사용 가능한 비밀번호입니다.");
+    setIsPasswordValid(true);
+    setPasswordChecked(true);
   };
 
   /* ================= Password Confirm ================= */
   const handlePasswordConfirmChange = (e) => {
     const filtered = e.target.value.replace(/[^A-Za-z0-9@$!%*#?&]/g, "");
     setForm((prev) => ({ ...prev, passwordConfirm: filtered }));
+    setIsPasswordMatch(false);
+    setPasswordConfirmChecked(false);
   };
 
   const handlePasswordConfirmBlur = () => {
-    alert(
-      form.passwordConfirm === form.password
-        ? "비밀번호가 일치합니다."
-        : "비밀번호가 일치하지 않습니다."
-    );
+    // 이미 검증했으면 다시 검증하지 않음
+    if (passwordConfirmChecked) {
+      return;
+    }
+
+    const { password, passwordConfirm } = form;
+
+    if (!passwordConfirm) {
+      return;
+    }
+
+    if (password !== passwordConfirm) {
+      alert("비밀번호가 일치하지 않습니다.");
+      setIsPasswordMatch(false);
+      setPasswordConfirmChecked(true);
+      return;
+    }
+
+    alert("비밀번호가 일치합니다.");
+    setIsPasswordMatch(true);
+    setPasswordConfirmChecked(true);
   };
 
   /* ================= Phone ================= */
@@ -135,17 +180,6 @@ function Signup() {
       v = v.slice(0, 3) + "-" + v.slice(3, 7) + "-" + v.slice(7, 11);
 
     setForm((p) => ({ ...p, phone: v }));
-  };
-
-  const handlePhoneBlur = () => {
-    const phoneWithoutHyphen = form.phone.replace(/-/g, "");
-    const phoneRegex = /^010\d{8}$/;
-
-    alert(
-      phoneRegex.test(phoneWithoutHyphen)
-        ? "올바른 휴대폰 번호입니다."
-        : "휴대폰 번호 형식이 올바르지 않습니다. (010으로 시작하는 11자리)"
-    );
   };
 
   /* ================= Address Detail ================= */
@@ -227,9 +261,21 @@ function Signup() {
       return;
     }
 
+    // 비밀번호 검증 완료 체크
+    if (!isPasswordValid) {
+      alert("비밀번호 검증을 완료해주세요.");
+      return;
+    }
+
     // 비밀번호 일치 체크
     if (data.password !== data.passwordConfirm) {
       alert("비밀번호가 일치하지 않습니다.");
+      return;
+    }
+
+    // 비밀번호 일치 확인 체크
+    if (!isPasswordMatch) {
+      alert("비밀번호 일치 확인을 완료해주세요.");
       return;
     }
 
@@ -243,8 +289,7 @@ function Signup() {
     if (!window.confirm("회원가입을 하시겠습니까?")) return;
 
     try {
-  const res = await axios.post("/user/signup", data);
-  
+      const res = await axios.post("/user/signup", data);
 
       if (res.data.result) {
         alert(res.data.msg);
@@ -339,6 +384,7 @@ function Signup() {
                     <div className="form-group row">
                       <div className="col-sm-6 mb-3 mb-sm-0">
                         <input
+                          ref={passwordRef}
                           type="password"
                           className="form-control form-control-user"
                           name="password"
@@ -346,11 +392,11 @@ function Signup() {
                           placeholder="비밀번호 (8-15자)"
                           value={form.password}
                           onChange={handlePasswordChange}
-                          onBlur={handlePasswordBlur}
                         />
                       </div>
                       <div className="col-sm-6">
                         <input
+                          ref={passwordConfirmRef}
                           type="password"
                           className="form-control form-control-user"
                           name="passwordConfirm"
@@ -358,6 +404,7 @@ function Signup() {
                           placeholder="비밀번호 확인"
                           value={form.passwordConfirm}
                           onChange={handlePasswordConfirmChange}
+                          onFocus={handlePasswordConfirmFocus}
                           onBlur={handlePasswordConfirmBlur}
                         />
                       </div>
@@ -373,7 +420,6 @@ function Signup() {
                         placeholder="휴대폰번호 (010-0000-0000)"
                         value={form.phone}
                         onChange={handlePhoneChange}
-                        onBlur={handlePhoneBlur}
                       />
                     </div>
 
@@ -435,8 +481,8 @@ function Signup() {
                       </div>
                     </div>
 
-                    
-                    <a href="#"
+                    <a 
+                      href="#"
                       id="btnSignup"
                       className="btn btn-primary btn-user btn-block"
                       onClick={handleSignup}

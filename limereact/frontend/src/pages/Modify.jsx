@@ -86,7 +86,7 @@ function Modify() {
     newFiles.forEach((file) => formData.append("uploadFile", file));
 
     try {
-      const res = await axios.post("/modify", formData, {
+      const res = await axios.post("/post/modify", formData, {
         headers: { "Content-Type": "multipart/form-data" },
       });
 

@@ -5,6 +5,7 @@ import CommentSection from "../components/CommentSection";
 import axios from "axios";
 import { useEffect, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
+import useAuthStore from "../store/authStore";
 
 function PostDetail() {
   const { postUid } = useParams();
@@ -12,7 +13,8 @@ function PostDetail() {
   
   const [post, setPost] = useState(null);
   const [files, setFiles] = useState([]);
-  const [loginUser, setLoginUser] = useState(null);
+  const isLogin = useAuthStore((state) => state.isLogin);
+  const user = useAuthStore((state) => state.user);
 
   useEffect(() => {
     if (!postUid) {
@@ -21,19 +23,8 @@ function PostDetail() {
       return;
     }
     fetchPost();
-    fetchLoginUser();
   }, [postUid]);
 
-  const fetchLoginUser = async () => {
-    try {
-      const res = await axios.get("/user/session");
-      if (res.data.success) {
-        setLoginUser(res.data.user);
-      }
-    } catch (error) {
-      console.log("비로그인 상태");
-    }
-  };
 
   const fetchPost = async () => {
     try {
@@ -98,7 +89,7 @@ function PostDetail() {
                   </small>
                 </div>
 
-                {loginUser?.username === post.USERNAME ? (
+                {isLogin && (user?.username === post.USERNAME) ? (
                   <div>
                     <button
                       className="btn btn-danger mr-2"
@@ -152,7 +143,7 @@ function PostDetail() {
                 </div>
               )}
 
-              <CommentSection postUid={postUid} loginUser={loginUser} />
+              <CommentSection postUid={postUid} loginUser={user} />
             </div>
           </div>
         </div>

@@ -64,7 +64,7 @@ function Write() {
     files.forEach((file) => formData.append("uploadFile", file));
 
     try {
-      const res = await axios.post("/write", formData, {
+      const res = await axios.post("/post/write", formData, {
         headers: { "Content-Type": "multipart/form-data" },
       });
 

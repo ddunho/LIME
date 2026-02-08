@@ -72,7 +72,7 @@ function Sidebar() {
                 </Link>
               )}
 
-              <Link className="collapse-item" to="/membership">
+              <Link className="collapse-item" to="/signup">
                 membership
               </Link>
             </div>
